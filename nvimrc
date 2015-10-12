@@ -7,7 +7,6 @@ set tabstop=4
 set shiftwidth=4
 set expandtab
 
-set nocompatible        " use vim defaults
 set scrolloff=3         " keep 3 lines when scrolling
 set ai                  " set auto-indenting on for programming
  
@@ -33,30 +32,23 @@ syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type
 
-set t_RV=               " http://bugs.debian.org/608242, http://groups.google.com/group/vim_dev/browse_thread/thread/9770ea844cec3282et number
+"set t_RV=               " http://bugs.debian.org/608242, http://groups.google.com/group/vim_dev/browse_thread/thread/9770ea844cec3282et number
 " Fix backspace/delete key issues
 set backspace=indent,eol,start
 set rtp+=~/.nvim/
 
 set spell               " Setting spellcheck language to US English
 
+
+if empty(glob('~/.nvim/autoload/plug.vim'))
+      silent !curl -fLo ~/.nvim/autoload/plug.vim --create-dirs
+          \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+      autocmd VimEnter * PlugInstall
+endif
+
 call plug#begin('~/.nvim/plugged')
-" Track the engine.
-Plug 'SirVer/ultisnips'
-
-" Snippets are separated from the engine. Add this if you want them:
-Plug 'honza/vim-snippets'
-
-" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
-let g:UltiSnipsExpandTrigger="<c-1>"
-let g:UltiSnipsJumpForwardTrigger="<c-b>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
-
-" If you want :UltiSnipsEdit to split your window.
-let g:UltiSnipsEditSplit="vertical"
 
 Plug 'Valloric/YouCompleteMe'
-
-Plug 'kiith-sa/DSnips'
+autocmd! User YouCompleteMe call youcompleteme#Enable()
 
 call plug#end()
