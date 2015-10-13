@@ -33,10 +33,9 @@ set visualbell t_vb=    " turn off error beep/flash
 set novisualbell        " turn off visual bell
  
 set backspace=indent,eol,start  " make that backspace key work the way it should
-set runtimepath=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
+set rtp+=~/.vim         " Ensure .vim folder is at the head of the runtime path
+set rtp+=$VIMRUNTIME    " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
 
-set spell spelllang=en_us       " Setting spellcheck language to US English
- 
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type
@@ -48,6 +47,12 @@ set backspace=indent,eol,start
 
 set rtp+=~/.vim/
 
+if empty(glob('~/.vim/spell'))
+    silent !mkdir ~/.vim/spell
+    silent !wget -O ~/.vim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
+    silent !wget -O ~/.vim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
+endif
+
 if empty(glob('~/.vim/autoload/plug.vim'))
       silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
           \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
@@ -55,23 +60,30 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 
 call plug#begin('~/.vim/plugged')
-" Track the engine.
- Plug 'SirVer/ultisnips'
 
-" " Snippets are separated from the engine. Add this if you want them:
- Plug 'honza/vim-snippets'
+Plug 'Valloric/YouCompleteMe'
+autocmd! User YouCompleteMe call youcompleteme#Enable()
 
-" Trigger configuration. Do not use <tab> if you use
-" https://github.com/Valloric/YouCompleteMe.
- let g:UltiSnipsExpandTrigger="<c-tab>"
- let g:UltiSnipsJumpForwardTrigger="<c-b>"
- let g:UltiSnipsJumpBackwardTrigger="<c-z>"
-"
-" If you want :UltiSnipsEdit to split your window.
-let g:UltiSnipsEditSplit="vertical"
-"
- Plug 'Valloric/YouCompleteMe'
-"
-Plug 'kiith-sa/DSnips'
-"
+Plug 'airblade/vim-gitgutter'
+let g:gitgutter_sign_column_always = 1
+
+Plug 'kien/ctrlp.vim'
+
+Plug 'scrooloose/nerdtree'
+
+Plug 'majutsushi/tagbar'
+:nnoremap tb :TagbarToggle<CR>
+if empty(glob('~/ctags'))
+    silent !mkdir ~/ctags
+    silent !wget -O ~/ctags/ctags-5.8.tar.gz sourceforge.net/projects/ctags/files/ctags/5.8/ctags-5.8.tar.gz
+    silent !tar -xzvf ~/ctags/ctags-5.8.tar.gz
+    echo('You still need to run ./configure, make and sudo make install for ctags in your home directory')
+    echo("Otherwise tagbar won't work")
+endif
+
+let g:tagbar_ctags_bin='/usr/local/bin/ctags'
+let g:tagbar_autofocus=1
+
+Plug 'tpope/vim-fugitive'
+
 call plug#end()

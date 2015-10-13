@@ -13,6 +13,7 @@ set ai                  " set auto-indenting on for programming
 set showcmd             " display incomplete commands
 set nobackup            " do not keep a backup file
 set number              " show line numbers
+set relativenumber      " line numbers are relative to current position
 set ruler               " show the current row and column
  
 set hlsearch            " highlight searches
@@ -28,6 +29,7 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
 set rtp+=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
 
+
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type
@@ -41,7 +43,6 @@ if empty(glob('~/.nvim/spell'))
     silent !wget -O ~/.nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
     silent !wget -O ~/.nvim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
 endif
-set spell               " Setting spellcheck language to US English
 
 
 if empty(glob('~/.nvim/autoload/plug.vim'))
@@ -75,4 +76,7 @@ endif
 let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:tagbar_autofocus=1
 
+Plug 'tpope/vim-fugitive'
+
 call plug#end()
+
