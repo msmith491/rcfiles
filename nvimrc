@@ -25,8 +25,8 @@ set visualbell t_vb=    " turn off error beep/flash
 set novisualbell        " turn off visual bell
  
 set backspace=indent,eol,start  " make that backspace key work the way it should
-set runtimepath=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
-
+set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
+set rtp+=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
 
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
@@ -35,8 +35,12 @@ filetype indent on      " load indent file for specific file type
 "set t_RV=               " http://bugs.debian.org/608242, http://groups.google.com/group/vim_dev/browse_thread/thread/9770ea844cec3282et number
 " Fix backspace/delete key issues
 set backspace=indent,eol,start
-set rtp+=~/.nvim/
 
+if empty(glob('~/.nvim/spell'))
+    silent !mkdir ~/.nvim/spell
+    silent !wget -O ~/.nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
+    silent !wget -O ~/.nvim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
+endif
 set spell               " Setting spellcheck language to US English
 
 
@@ -50,5 +54,25 @@ call plug#begin('~/.nvim/plugged')
 
 Plug 'Valloric/YouCompleteMe'
 autocmd! User YouCompleteMe call youcompleteme#Enable()
+
+Plug 'airblade/vim-gitgutter'
+let g:gitgutter_sign_column_always = 1
+
+Plug 'kien/ctrlp.vim'
+
+Plug 'scrooloose/nerdtree'
+
+Plug 'majutsushi/tagbar'
+:nnoremap tb :TagbarToggle<CR>
+if empty(glob('~/ctags'))
+    silent !mkdir ~/ctags
+    silent !wget -O ~/ctags/ctags-5.8.tar.gz sourceforge.net/projects/ctags/files/ctags/5.8/ctags-5.8.tar.gz
+    silent !tar -xzvf ~/ctags/ctags-5.8.tar.gz
+    echo('You still need to run ./configure, make and sudo make install for ctags in your home directory')
+    echo("Otherwise tagbar won't work")
+endif
+
+let g:tagbar_ctags_bin='/usr/local/bin/ctags'
+let g:tagbar_autofocus=1
 
 call plug#end()
