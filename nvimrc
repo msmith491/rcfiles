@@ -9,26 +9,27 @@ set expandtab
 
 set scrolloff=3         " keep 3 lines when scrolling
 set ai                  " set auto-indenting on for programming
- 
+
 set showcmd             " display incomplete commands
 set nobackup            " do not keep a backup file
 set number              " show line numbers
 set relativenumber      " line numbers are relative to current position
 set ruler               " show the current row and column
- 
+set colorcolumn=79      " Show the 79 character cutoff marker
+set nowrap
+
 set hlsearch            " highlight searches
 set incsearch           " do incremental searching
 set showmatch           " jump to matches when entering regexp
 set ignorecase          " ignore case when searching
 set smartcase           " no ignorecase if Uppercase char present
- 
+
 set visualbell t_vb=    " turn off error beep/flash
 set novisualbell        " turn off visual bell
- 
+
 set backspace=indent,eol,start  " make that backspace key work the way it should
 set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
 set rtp+=$VIMRUNTIME     " turn off user scripts, https://github.com/igrigorik/vimgolf/issues/129
-
 
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
@@ -37,6 +38,8 @@ filetype indent on      " load indent file for specific file type
 "set t_RV=               " http://bugs.debian.org/608242, http://groups.google.com/group/vim_dev/browse_thread/thread/9770ea844cec3282et number
 " Fix backspace/delete key issues
 set backspace=indent,eol,start
+set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+   " Show characters for trailing whitespace
+set list
 
 if empty(glob('~/.nvim/spell'))
     silent !mkdir ~/.nvim/spell
@@ -77,6 +80,15 @@ let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:tagbar_autofocus=1
 
 Plug 'tpope/vim-fugitive'
+
+Plug 'andviro/flake8-vim'
+let g:PyFlakeOnWrite = 1
+let g:PyFlakeDisableMessages = ''
+let g:PyFlakeCheckers = 'pep8,mccabe,frosted'
+let g:PyFlakeDefaultComplexity=10
+let g:PyFlakeSigns = 1
+let g:PyFlakeMaxLineLength = 79
+let g:PyFlakeAggressive = 4
 
 call plug#end()
 
