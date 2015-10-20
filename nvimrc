@@ -64,7 +64,11 @@ autocmd! User YouCompleteMe call youcompleteme#Enable()
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
 
-Plug 'kien/ctrlp.vim'
+Plug 'ctrlpvim/ctrlp.vim'
+Plug 'FelikZ/ctrlp-py-matcher'
+if has('python') || has('python3')
+    let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
+endif
 
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
@@ -84,6 +88,7 @@ let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:tagbar_autofocus=1
 
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-commentary'
 
 Plug 'andviro/flake8-vim'
 let g:PyFlakeOnWrite = 1
@@ -93,6 +98,9 @@ let g:PyFlakeDefaultComplexity=10
 let g:PyFlakeSigns = 1
 let g:PyFlakeMaxLineLength = 79
 let g:PyFlakeAggressive = 4
+
+Plug 'jmcantrell/vim-virtualenv'
+let g:virtualenv_directory = '~/venvs'
 
 call plug#end()
 
