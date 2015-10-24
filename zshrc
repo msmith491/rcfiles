@@ -1,5 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH=/Users/matt/.oh-my-zsh
+export ZSH="$HOME/.oh-my-zsh"
 
 alias vi=nvim
 alias vim=nvim
