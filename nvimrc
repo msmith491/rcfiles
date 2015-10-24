@@ -1,7 +1,9 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
-let g:python_host_prog="/Users/matt/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
+let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
+
+let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1
 
 set tabstop=4
 set shiftwidth=4
