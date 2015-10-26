@@ -104,5 +104,7 @@ let g:PyFlakeAggressive = 4
 Plug 'jmcantrell/vim-virtualenv'
 let g:virtualenv_directory = '~/venvs'
 
+Plug 'zah/nim.vim'
+
 call plug#end()
 
