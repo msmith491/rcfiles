@@ -45,6 +45,11 @@ set backspace=indent,eol,start
 set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+   " Show characters for trailing whitespace
 set list
 
+" Setting leader key based mappings
+let mapleader=","
+noremap <Leader>b :buffers<CR>:buffer<Space>
+" """""""""""""""""""""""""""""""""
+
 if empty(glob('~/.nvim/spell'))
     silent !mkdir ~/.nvim/spell
     silent !wget -O ~/.nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
@@ -62,6 +67,7 @@ call plug#begin('~/.nvim/plugged')
 
 Plug 'Valloric/YouCompleteMe'
 autocmd! User YouCompleteMe call youcompleteme#Enable()
+autocmd CompleteDone * pclose
 
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
