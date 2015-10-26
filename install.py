@@ -19,5 +19,6 @@ for elem in conf_files:
         filtered.append(elem)
 
 for f in filtered:
-    print(f, "/".join((os.environ["HOME"] + "." + os.path.basename(f))))
-    # os.symlink(f, "/".join((os.environ["HOME"] + "." + os.path.basename(f))))
+    print("symlinking:")
+    print(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
+    os.symlink(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
