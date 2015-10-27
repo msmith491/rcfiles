@@ -93,6 +93,7 @@ endif
 " Better file browser
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
+let g:NERDTreeDirArrows=0
 
 " Function definitions in their own window
 Plug 'majutsushi/tagbar'
