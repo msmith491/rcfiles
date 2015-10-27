@@ -14,6 +14,8 @@ endif
 set tabstop=4           " Set number of spaces that tabs count for
 set shiftwidth=4        " Set autoindent level to 4 spaces
 set expandtab           " Change all tabs to spaces
+set textwidth=79        " Force wrap at 79
+
 
 set scrolloff=3         " keep 3 lines when scrolling
 set ai                  " set auto-indenting on for programming

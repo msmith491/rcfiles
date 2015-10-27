@@ -3,6 +3,7 @@ export ZSH="$HOME/.oh-my-zsh"
 
 alias vi=nvim
 alias vim=nvim
+alias lynx="lynx -cfg=~/.lynxrc"
 
 export NVIM_TUI_ENABLE_CURSOR_SHAPE=1
 # Set name of the theme to load.
