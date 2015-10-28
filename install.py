@@ -14,6 +14,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--exclude", action="store", nargs="+",
                     help="Accepts a list of regex strings used to "
                     "exclude files from installing")
+parser.add_argument("--uninstall", action="store_true",
+                    help="Uninstall all tracked rcfiles [WIP]")
 args = parser.parse_args()
 
 if args.exclude:
@@ -29,8 +31,16 @@ for elem in conf_files:
     if not any([re.match(regex, elem) for regex in re_exclude]):
         filtered.append(elem)
 
+if args.uninstall:
+    for f in filtered:
+        newfile = os.path.expanduser("~") + "/." + os.path.basename(f)
+        if os.path.islink(newfile):
+            print("Found {}...unlinking".format(newfile))
+            os.unlink(newfile)
+    exit(0)
+
 for f in filtered:
-    newfile = os.environ["HOME"] + "/." + os.path.basename(f)
+    newfile = os.path.expanduser("~") + "/." + os.path.basename(f)
     # Backup any existing dotfiles we might overwrite, ignore symlinks
     if os.path.islink(newfile):
         print("Found existing symlink, skipping: {}".format(newfile))
@@ -41,5 +51,6 @@ for f in filtered:
             newfile, bakfile))
         os.rename(newfile, bakfile)
     print("symlinking:")
-    print(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
-    os.symlink(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
+    print(f, "/".join((os.path.expanduser("~"), "." + os.path.basename(f))))
+    os.symlink(f, "/".join((os.path.expanduser("~"), "." + os.path.basename(f))))
+exit(0)
