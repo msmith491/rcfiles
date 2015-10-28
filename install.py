@@ -30,6 +30,16 @@ for elem in conf_files:
         filtered.append(elem)
 
 for f in filtered:
+    newfile = os.environ["HOME"] + "/." + os.path.basename(f)
+    # Backup any existing dotfiles we might overwrite, ignore symlinks
+    if os.path.islink(newfile):
+        print("Found existing symlink, skipping: {}".format(newfile))
+        continue
+    elif os.path.isfile(newfile):
+        bakfile = newfile + ".bak"
+        print("Found existing rcfile, renaming: {} --> {}".format(
+            newfile, bakfile))
+        os.rename(newfile, bakfile)
     print("symlinking:")
     print(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
     os.symlink(f, "/".join((os.environ["HOME"], "." + os.path.basename(f))))
