@@ -49,6 +49,9 @@ set backspace=indent,eol,start      " Setting backspace to behave in a sane fash
 set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+   " Show visible characters for whitespace
 set list    " Also necessary for visible trailing whitespace
 
+" Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
+inoremap tn <Esc>
+
 let mapleader=","
 " Easy buffer switching `,b<num>`
 noremap <Leader>b :buffers<CR>:buffer<Space>
@@ -73,6 +76,9 @@ call plug#begin('~/.vim/plugged')
 " You will need to run the install.py file in ~/.vim/plugged/YouCompleteMe
 Plug 'Valloric/YouCompleteMe'
 autocmd! User YouCompleteMe call youcompleteme#Enable()
+autocmd CompleteDone * pclose
+nnoremap <Leader>jd :YcmCompleter GoTo<CR>
+nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
 
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1

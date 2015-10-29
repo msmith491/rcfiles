@@ -45,6 +45,9 @@ set backspace=indent,eol,start      " Setting backspace to behave in a sane fash
 set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+   " Show visible characters for whitespace
 set list    " Also necessary for visible trailing whitespace
 
+" Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
+inoremap tn <Esc>
+
 " Setting leader key based mappings
 let mapleader=","
 " Easy buffer switching `,b<num>`
@@ -72,6 +75,8 @@ call plug#begin('~/.nvim/plugged')
 Plug 'Valloric/YouCompleteMe'
 autocmd! User YouCompleteMe call youcompleteme#Enable()
 autocmd CompleteDone * pclose
+nnoremap <Leader>jd :YcmCompleter GoTo<CR>
+nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
 
 " Shows git file changes to the left of line numbers
 Plug 'airblade/vim-gitgutter'
