@@ -42,6 +42,26 @@ if args.uninstall:
 for f in filtered:
     newfile = os.path.expanduser("~") + "/." + os.path.basename(f)
     # Backup any existing dotfiles we might overwrite, ignore symlinks
+    if "nvimrc" in f:
+        confdir = "/".join((os.path.expanduser("~"), ".config"))
+        nvimdir = "/".join((confdir, "nvim"))
+        nvimfile = "/".join((nvimdir, "init.vim"))
+        if not os.path.isdir(confdir):
+            os.makedirs(confdir)
+        if not os.path.isdir(nvimdir):
+            os.makedirs(nvimdir)
+        if os.path.islink(nvimfile):
+            print("Found existing symlink, skipping: {}".format(nvimfile))
+            continue
+        elif os.path.isfile(nvimfile):
+            bakfile = nvimfile + ".bak"
+            print("Found existing rcfile, renaming: {} --> {}".format(
+                newfile, bakfile))
+            os.rename(nvimfile, bakfile)
+        os.symlink(f, nvimfile)
+        print("symlinking:")
+        print(f, nvimfile)
+        continue
     if os.path.islink(newfile):
         print("Found existing symlink, skipping: {}".format(newfile))
         continue

@@ -48,10 +48,17 @@ set list    " Also necessary for visible trailing whitespace
 " Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
 inoremap tn <Esc>
 
+"""""""""""""""""""""""""""""""""""
 " Setting leader key based mappings
 let mapleader=","
 " Easy buffer switching `,b<num>`
 noremap <Leader>b :buffers<CR>:buffer<Space>
+
+" Spellcheck shortcuts
+" Quick spelling fix
+noremap <Leader>f 1z=
+" Toggle Highlighting
+noremap <Leader>s :set spell!
 " """""""""""""""""""""""""""""""""
 
 if empty(glob('~/.nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
