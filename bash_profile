@@ -14,6 +14,8 @@ elif [[ "$unamestr" == "Linux" ]]; then
     alias ls="ls --color=auto";
 fi
 
+alias cleanpy="find . \( -name '*.pyc' -o -name '*.pyo' \) -exec rm -f {} +"
+
 export _timestamp="[${PS1_red}\d \t${PS1_reset}]"
 
 if [[ "$USER" == "root" ]]
