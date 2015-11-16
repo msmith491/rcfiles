@@ -76,6 +76,10 @@ endif
 
 call plug#begin('~/.nvim/plugged')
 
+" Better python syntax highlighting
+Plug 'hdima/python-syntax'
+let g:python_highlight_all = 1
+
 " YouCompleteMe Autocompletion plugin
 " Requires cmake package
 " You will need to run the install.py file in ~/.nvim/plugged/YouCompleteMe
@@ -129,11 +133,14 @@ let g:PyFlakeCheckers = 'pep8,mccabe,frosted'
 let g:PyFlakeDefaultComplexity=10
 let g:PyFlakeSigns = 1
 let g:PyFlakeMaxLineLength = 79
-let g:PyFlakeAggressive = 4
+let g:PyFlakeAggressive = 5
 
 " Virtualenv integration, useful for YouCompleteMe autocompletion
 Plug 'jmcantrell/vim-virtualenv'
 let g:virtualenv_directory = '~/venvs'
+
+Plug 'luochen1990/rainbow'
+let g:rainbow_active = 1
 
 call plug#end()
 
