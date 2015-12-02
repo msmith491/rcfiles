@@ -59,6 +59,10 @@ noremap <Leader>b :buffers<CR>:buffer<Space>
 noremap <Leader>f 1z=
 " Toggle Highlighting
 noremap <Leader>s :set spell!
+" Quick Search
+noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
+" Delete all trailing whitespace
+noremap <Leader>ds :%s/\s\+$//<CR>
 " """""""""""""""""""""""""""""""""
 
 if empty(glob('~/.nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
@@ -100,6 +104,14 @@ if has('python') || has('python3')
     let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
 endif
 
+" If ag search is available, use that.  It's much faster than grep
+if executable('ag')
+    set grepprg=ag\ --nogroup\ --nocolor
+    " Set ctrlp to use ag instead of grep
+    let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+    let g:ctrlp_use_caching = 0
+endif
+
 " Better file browser
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
@@ -124,6 +136,8 @@ let g:tagbar_autofocus=1
 Plug 'tpope/vim-fugitive'
 " Multiline comments via `gc` shortcut
 Plug 'tpope/vim-commentary'
+" Surround helper
+Plug 'tpope/vim-surround'
 
 " Auto Flake8 checks on file write
 Plug 'andviro/flake8-vim'
@@ -141,6 +155,12 @@ let g:virtualenv_directory = '~/venvs'
 
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
+
+Plug 'jpalardy/vim-slime'
+let g:slime_target = "tmux"
+let g:slime_paste_file = "$HOME/.slime_paste"
+
+Plug 'Glench/Vim-Jinja2-Syntax'
 
 call plug#end()
 
