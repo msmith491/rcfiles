@@ -62,7 +62,9 @@ noremap <Leader>s :set spell!
 " Quick Search
 noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
 " Delete all trailing whitespace
-noremap <Leader>ds :%s/\s\+$//<CR>
+noremap <Leader>ds :try<CR> :%s/\s\+$//<CR> :let @/ = ''<CR> :catch<CR> :let @/ = ''<CR> :endtry<CR><CR>
+" Easy Reload nvimrc
+noremap <Leader>rv :source $MYVIMRC<CR>
 " """""""""""""""""""""""""""""""""
 
 if empty(glob('~/.nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
@@ -156,9 +158,8 @@ let g:virtualenv_directory = '~/venvs'
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
 
-Plug 'jpalardy/vim-slime'
-let g:slime_target = "tmux"
-let g:slime_paste_file = "$HOME/.slime_paste"
+
+Plug 'kovisoft/slimv'
 
 Plug 'Glench/Vim-Jinja2-Syntax'
 
