@@ -47,6 +47,7 @@ set list    " Also necessary for visible trailing whitespace
 
 " Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
 inoremap tn <Esc>
+set timeoutlen=100
 
 """""""""""""""""""""""""""""""""""
 " Setting leader key based mappings
