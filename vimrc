@@ -51,9 +51,23 @@ set list    " Also necessary for visible trailing whitespace
 " Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
 inoremap tn <Esc>
 
+"""""""""""""""""""""""""""""""""""
+" Setting leader key based mappings
 let mapleader=","
 " Easy buffer switching `,b<num>`
 noremap <Leader>b :buffers<CR>:buffer<Space>
+
+" Spellcheck shortcuts
+" Quick spelling fix
+noremap <Leader>f 1z=
+" Toggle Highlighting
+noremap <Leader>s :set spell!
+" Quick Search
+noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
+" Delete all trailing whitespace
+noremap <Leader>ds :try<CR> :%s/\s\+$//<CR> :let @/ = ''<CR> :catch<CR> :let @/ = ''<CR> :endtry<CR><CR>
+" Easy Reload nvimrc
+noremap <Leader>rv :source $MYVIMRC<CR>
 " """""""""""""""""""""""""""""""""
 
 if empty(glob('~/.vim/spell'))
