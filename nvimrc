@@ -29,10 +29,12 @@ set smartcase           " no ignorecase if Uppercase char present
 set visualbell t_vb=    " turn off error beep/flash
 set novisualbell        " turn off visual bell
 set wildignore+=*.pyc,*.swp     " Filter these filetypes from the file search functions
+set splitright          " Vertical splits go to the right by default
+set splitbelow          " Horizontal splits go below by default
 
 set backspace=indent,eol,start  " make that backspace key work the way it should
-set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
-set rtp+=$VIMRUNTIME
+" set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
+" set rtp+=$VIMRUNTIME
 
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
@@ -47,11 +49,16 @@ set list    " Also necessary for visible trailing whitespace
 
 " Esc alternative for Dvorak users.  QWERTY folks should use jk or kj
 inoremap tn <Esc>
-set timeoutlen=100
+set timeoutlen=300
+
+""""""Neovim Specific Settings""""""
+" Increase terminal buffer 10x
+let g:terminal_scrollback_buffer_size = 10000
 
 """""""""""""""""""""""""""""""""""
 " Setting leader key based mappings
 let mapleader=","
+let maplocalleader=";"
 " Easy buffer switching `,b<num>`
 noremap <Leader>b :buffers<CR>:buffer<Space>
 
@@ -66,22 +73,26 @@ noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
 noremap <Leader>ds :try<CR> :%s/\s\+$//<CR> :let @/ = ''<CR> :catch<CR> :let @/ = ''<CR> :endtry<CR><CR>
 " Easy Reload nvimrc
 noremap <Leader>rv :source $MYVIMRC<CR>
+" Easy Neovim Terminal Split
+noremap <Leader>gt :vsp term://zsh<CR> i
+" Easy Split Switch From Neovim Terminal Insert Mode
+tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 " """""""""""""""""""""""""""""""""
 
-if empty(glob('~/.nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
-    silent !mkdir ~/.nvim/spell
-    silent !wget -O ~/.nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
-    silent !wget -O ~/.nvim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
+if empty(glob('~/.config/nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
+    silent !mkdir ~/.config/nvim/spell
+    silent !wget -O ~/.config/nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
+    silent !wget -O ~/.config/nvim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
 endif
 
 " Auto install vim-plug for plugin management
-if empty(glob('~/.nvim/autoload/plug.vim'))
-      silent !curl -fLo ~/.nvim/autoload/plug.vim --create-dirs
+if empty(glob('~/.config/nvim/autoload/plug.vim'))
+      silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
           \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
       autocmd VimEnter * PlugInstall
 endif
 
-call plug#begin('~/.nvim/plugged')
+call plug#begin('~/.config/nvim/plugged')
 
 " Better python syntax highlighting
 Plug 'hdima/python-syntax'
@@ -141,6 +152,8 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-commentary'
 " Surround helper
 Plug 'tpope/vim-surround'
+" Date helper
+Plug 'tpope/vim-speeddating'
 
 " Auto Flake8 checks on file write
 Plug 'andviro/flake8-vim'
@@ -164,5 +177,25 @@ Plug 'kovisoft/slimv'
 
 Plug 'Glench/Vim-Jinja2-Syntax'
 
+" Dlang Autocomplete/GoTo def
+Plug 'Hackerpilot/DCD'
+Plug 'idanarye/vim-dutyl'
+let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
+autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
+autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
+
 call plug#end()
 
+" Update Dlang autocomplete client/server locations
+call dutyl#register#tool('dcd-client',$HOME . '/.nvim/plugged/DCD/bin/dcd-client')
+call dutyl#register#tool('dcd-server',$HOME . '/.nvim/plugged/DCD/bin/dcd-server')
+
+function StartDCD()
+    let testvar = system('ps -ef | grep dcd-server | grep -v grep')
+    if testvar == ''
+        let server = 'tmux new -s dcd-server -d "' . $HOME . '/.nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
+        exec "!" . server
+    endif
+endfunction
+
+autocmd FileType d call StartDCD()
