@@ -1,10 +1,6 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
-let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
-
-let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
-
 set tabstop=4           " Set number of spaces that tabs count for
 set shiftwidth=4        " Set autoindent level to 4 spaces
 set expandtab           " Change all tabs to spaces
@@ -33,15 +29,11 @@ set splitright          " Vertical splits go to the right by default
 set splitbelow          " Horizontal splits go below by default
 
 set backspace=indent,eol,start  " make that backspace key work the way it should
-" set rtp+=~/.nvim    " Ensure .nvim folder is at the head of the runtime path
-" set rtp+=$VIMRUNTIME
 
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type
 
-colorscheme delek
-"set t_RV=               " http://bugs.debian.org/608242, http://groups.google.com/group/vim_dev/browse_thread/thread/9770ea844cec3282et number
 " Fix backspace/delete key issues
 set backspace=indent,eol,start      " Setting backspace to behave in a sane fashion
 set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+   " Show visible characters for whitespace
@@ -51,11 +43,17 @@ set list    " Also necessary for visible trailing whitespace
 inoremap tn <Esc>
 set timeoutlen=300
 
-""""""Neovim Specific Settings""""""
-" Increase terminal buffer 10x
-let g:terminal_scrollback_buffer_size = 10000
-
 """""""""""""""""""""""""""""""""""
+""""""Neovim Specific Settings""""""
+"""""""""""""""""""""""""""""""""""
+if has('nvim')
+    " Increase terminal buffer 10x
+    let g:terminal_scrollback_buffer_size = 10000
+    let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
+    let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
+endif
+"""""""""""""""""""""""""""""""""""
+
 " Setting leader key based mappings
 let mapleader=","
 let maplocalleader=";"
@@ -79,12 +77,6 @@ noremap <Leader>gt :vsp term://zsh<CR> i
 tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 " """""""""""""""""""""""""""""""""
 
-if empty(glob('~/.config/nvim/spell')) " Setup spellcheck for English.  Can be enabled via `:set spell`
-    silent !mkdir ~/.config/nvim/spell
-    silent !wget -O ~/.config/nvim/spell/en.ascii.spl http://ftp.vim.org/vim/runtime/spell/en.ascii.spl
-    silent !wget -O ~/.config/nvim/spell/en.utf-8.spl http://ftp.vim.org/vim/runtime/spell/en.utf-8.spl
-endif
-
 " Auto install vim-plug for plugin management
 if empty(glob('~/.config/nvim/autoload/plug.vim'))
       silent !curl -fLo ~/.config/nvim/autoload/plug.vim --create-dirs
@@ -92,10 +84,13 @@ if empty(glob('~/.config/nvim/autoload/plug.vim'))
       autocmd VimEnter * PlugInstall
 endif
 
+""""""""""""""""""""""""""""""""""""""""
+"""""""""" START PLUGINS """""""""""""""
+""""""""""""""""""""""""""""""""""""""""
 call plug#begin('~/.config/nvim/plugged')
 
 " Better python syntax highlighting
-Plug 'hdima/python-syntax'
+Plug 'msmith491/python-syntax'
 let g:python_highlight_all = 1
 
 " YouCompleteMe Autocompletion plugin
@@ -107,6 +102,10 @@ autocmd CompleteDone * pclose
 nnoremap <Leader>jd :YcmCompleter GoTo<CR>
 nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
 
+" Theme
+Plug 'freeo/vim-kalisi'
+set background=dark
+
 " Shows git file changes to the left of line numbers
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
@@ -114,6 +113,8 @@ let g:gitgutter_sign_column_always = 1
 " Amazing ctrl-p fuzzy searching plugin with better engine
 Plug 'ctrlpvim/ctrlp.vim'
 Plug 'FelikZ/ctrlp-py-matcher'
+let g:ctrlp_max_files=0
+let g:ctrlp_follow_symlinks=1
 if has('python') || has('python3')
     let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
 endif
@@ -122,7 +123,8 @@ endif
 if executable('ag')
     set grepprg=ag\ --nogroup\ --nocolor
     " Set ctrlp to use ag instead of grep
-    let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+    " Using the `-u` flag to search in hidden files as well
+    let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git"'
     let g:ctrlp_use_caching = 0
 endif
 
@@ -135,17 +137,23 @@ Plug 'majutsushi/tagbar'
 " Accessible via `tb` shortcut
 :nnoremap tb :TagbarToggle<CR>
 " Autoinstalling exhuberent ctags so tagbar will function
-if empty(glob('~/ctags'))
+if !executable('ctags')
     silent !mkdir ~/ctags
     silent !wget -O ~/ctags/ctags-5.8.tar.gz sourceforge.net/projects/ctags/files/ctags/5.8/ctags-5.8.tar.gz
     silent !tar -xzvf ~/ctags/ctags-5.8.tar.gz
+    cd ~/ctags/ctags-5.8
+    silent !./configure
+    silent !make
+    silent !sudo make install
     echo('You still need to run ./configure, make and sudo make install for ctags in your home directory')
     echo("Otherwise tagbar won't work")
 endif
 let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:tagbar_autofocus=1
 
-" Some useful tpope plugins:
+""""""""""""""""""""""""""""""""""""""""
+"""""""""" Hail To The Tpope """""""""""
+""""""""""""""""""""""""""""""""""""""""
 " Git integration
 Plug 'tpope/vim-fugitive'
 " Multiline comments via `gc` shortcut
@@ -154,6 +162,7 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
 " Date helper
 Plug 'tpope/vim-speeddating'
+"""""""""""""""""""""""""""""""""""""""
 
 " Auto Flake8 checks on file write
 Plug 'andviro/flake8-vim'
@@ -168,34 +177,54 @@ let g:PyFlakeAggressive = 5
 " Virtualenv integration, useful for YouCompleteMe autocompletion
 Plug 'jmcantrell/vim-virtualenv'
 let g:virtualenv_directory = '~/venvs'
+if !isdirectory(glob('~/venvs')) && has('nvim')
+     silent !mkdir ~/venvs
+     silent !virtualenv ~/venvs/neovim
+     silent !python ~/venvs/neovim/bin/pip install neovim
+endif
 
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
 
-
-Plug 'kovisoft/slimv'
-
 Plug 'Glench/Vim-Jinja2-Syntax'
 
-" Dlang Autocomplete/GoTo def
-Plug 'Hackerpilot/DCD'
-Plug 'idanarye/vim-dutyl'
-let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
-autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
-autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
+""""""""""""""""""""""""""""""""""""""""
+"""""" Plugins Only I Care About """""""
+""""""""""""""""""""""""""""""""""""""""
+if has('nvim')
+    " Lisp plugin
+    Plug 'kovisoft/slimv'
+    " Dlang Autocomplete/GoTo def
+    Plug 'Hackerpilot/DCD'
+    Plug 'idanarye/vim-dutyl'
+    let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
+    autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
+    autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
+endif
 
 call plug#end()
 
-" Update Dlang autocomplete client/server locations
-call dutyl#register#tool('dcd-client',$HOME . '/.nvim/plugged/DCD/bin/dcd-client')
-call dutyl#register#tool('dcd-server',$HOME . '/.nvim/plugged/DCD/bin/dcd-server')
+""""""""""""""""""""""""""""""""""""""""
+"""""""""" END PLUGINS  """"""""""""""""
+""""""""""""""""""""""""""""""""""""""""
+colorscheme kalisi
 
-function StartDCD()
-    let testvar = system('ps -ef | grep dcd-server | grep -v grep')
-    if testvar == ''
-        let server = 'tmux new -s dcd-server -d "' . $HOME . '/.nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
-        exec "!" . server
-    endif
-endfunction
+""""""""""""""""""""""""""""""""""""""""
+""""""" Stuff Only I Care About """"""""
+""""""""""""""""""""""""""""""""""""""""
+" Dlang settings and servers
+if has('nvim')
+    " Update Dlang autocomplete client/server locations
+    call dutyl#register#tool('dcd-client',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-client')
+    call dutyl#register#tool('dcd-server',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-server')
 
-autocmd FileType d call StartDCD()
+    function StartDCD()
+        let testvar = system('ps -ef | grep dcd-server | grep -v grep')
+        if testvar == ''
+            let server = 'tmux new -s dcd-server -d "' . $HOME . '/.config/nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
+            exec "!" . server
+        endif
+    endfunction
+
+    autocmd FileType d call StartDCD()
+endif
