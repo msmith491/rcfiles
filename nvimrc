@@ -4,6 +4,8 @@ filetype off                  " required
 set tabstop=4           " Set number of spaces that tabs count for
 set shiftwidth=4        " Set autoindent level to 4 spaces
 set expandtab           " Change all tabs to spaces
+set lazyredraw          " Redraw screen only when typing
+set ttyfast             " Setting to ensure tmux is drawing quickly
 
 set scrolloff=3         " keep 3 lines when scrolling
 set ai                  " set auto-indenting on for programming
@@ -43,6 +45,9 @@ set list    " Also necessary for visible trailing whitespace
 inoremap tn <Esc>
 set timeoutlen=300
 
+" Force `Y` behavior to match that of `C` and `D`
+nnoremap Y y$
+
 """""""""""""""""""""""""""""""""""
 """"""Neovim Specific Settings""""""
 """""""""""""""""""""""""""""""""""
@@ -52,6 +57,10 @@ if has('nvim')
     let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
     let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
 endif
+" Fixing Neovim Meta Character Terminal Word Jumping
+tnoremap <A-b> <Esc>b
+tnoremap <A-f> <Esc>f
+tnoremap <A-.> <Esc>.
 """""""""""""""""""""""""""""""""""
 
 " Setting leader key based mappings
@@ -71,6 +80,8 @@ noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
 noremap <Leader>ds :try<CR> :%s/\s\+$//<CR> :let @/ = ''<CR> :catch<CR> :let @/ = ''<CR> :endtry<CR><CR>
 " Easy Reload nvimrc
 noremap <Leader>rv :source $MYVIMRC<CR>
+" Easy Clear Last Search Highlight
+noremap <Leader>c :let @/ = ''<CR>
 " Easy Neovim Terminal Split
 noremap <Leader>gt :vsp term://zsh<CR> i
 " Easy Split Switch From Neovim Terminal Insert Mode
@@ -124,7 +135,7 @@ if executable('ag')
     set grepprg=ag\ --nogroup\ --nocolor
     " Set ctrlp to use ag instead of grep
     " Using the `-u` flag to search in hidden files as well
-    let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git"'
+    let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git" | ag -v "\.pyc"'
     let g:ctrlp_use_caching = 0
 endif
 
