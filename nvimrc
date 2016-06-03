@@ -1,6 +1,7 @@
 set nocompatible              " be iMproved, required
 filetype off                  " required
 
+set sidescroll=1        " Make side scrolling reasonable
 set tabstop=4           " Set number of spaces that tabs count for
 set shiftwidth=4        " Set autoindent level to 4 spaces
 set expandtab           " Change all tabs to spaces
@@ -56,6 +57,12 @@ if has('nvim')
     let g:terminal_scrollback_buffer_size = 10000
     let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
     let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
+    let $TMUX_TUI_ENABLE_SHELL_CURSOR=1
+endif
+
+if exists('$TMUX')
+  let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
+  let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
 endif
 " Fixing Neovim Meta Character Terminal Word Jumping
 tnoremap <A-b> <Esc>b
@@ -86,6 +93,15 @@ noremap <Leader>c :let @/ = ''<CR>
 noremap <Leader>gt :vsp term://zsh<CR> i
 " Easy Split Switch From Neovim Terminal Insert Mode
 tnoremap <Leader>e <C-\><C-n><C-w><C-w>
+
+""""
+" Rust keymappings
+""""
+noremap <Leader>rp i println!("{:?}"
+
+noremap <Leader>rf i .fold(0, \|acc, item\| acc + item)
+
+
 " """""""""""""""""""""""""""""""""
 
 " Auto install vim-plug for plugin management
@@ -100,6 +116,10 @@ endif
 """"""""""""""""""""""""""""""""""""""""
 call plug#begin('~/.config/nvim/plugged')
 
+" Easier Tabline Modification
+Plug 'gcmt/taboo.vim'
+let g:taboo_tab_format = ' %N : %P '
+
 " Better python syntax highlighting
 Plug 'msmith491/python-syntax'
 let g:python_highlight_all = 1
@@ -108,6 +128,10 @@ let g:python_highlight_all = 1
 " Requires cmake package
 " You will need to run the install.py file in ~/.nvim/plugged/YouCompleteMe
 Plug 'Valloric/YouCompleteMe'
+let g:ycm_path_to_python_interpreter=$HOME . "/venvs/neovim/bin/python"
+let g:ycm_global_ycm_extra_conf=$HOME . "/ycm.py"
+let g:ycm_server_use_vim_stdout = 0
+let g:ycm_server_keep_logfiles = 1
 autocmd! User YouCompleteMe call youcompleteme#Enable()
 autocmd CompleteDone * pclose
 nnoremap <Leader>jd :YcmCompleter GoTo<CR>
@@ -121,27 +145,33 @@ set background=dark
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
 
-" Amazing ctrl-p fuzzy searching plugin with better engine
-Plug 'ctrlpvim/ctrlp.vim'
-Plug 'FelikZ/ctrlp-py-matcher'
-let g:ctrlp_max_files=0
-let g:ctrlp_follow_symlinks=1
-if has('python') || has('python3')
-    let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
-endif
+" " Amazing ctrl-p fuzzy searching plugin with better engine
+" Plug 'ctrlpvim/ctrlp.vim'
+" Plug 'FelikZ/ctrlp-py-matcher'
+" let g:ctrlp_max_files=0
+" let g:ctrlp_follow_symlinks=1
+" if has('python') || has('python3')
+"     let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
+" endif
 
-" If ag search is available, use that.  It's much faster than grep
-if executable('ag')
-    set grepprg=ag\ --nogroup\ --nocolor
-    " Set ctrlp to use ag instead of grep
-    " Using the `-u` flag to search in hidden files as well
-    let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git" | ag -v "\.pyc"'
-    let g:ctrlp_use_caching = 0
-endif
+" FuzzyFinder
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+let $FZF_DEFAULT_COMMAND = 'ag -g ""'
+nnoremap <C-p> :FZF<CR>
+
+" " If ag search is available, use that.  It's much faster than grep
+" if executable('ag')
+"     set grepprg=ag\ --nogroup\ --nocolor
+"     " Set ctrlp to use ag instead of grep
+"     " Using the `-u` flag to search in hidden files as well
+"     let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git" | ag -v "\.pyc"'
+"     let g:ctrlp_use_caching = 0
+" endif
 
 " Better file browser
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
+let NERDTreeIgnore = ['\.pyc$']
 
 " Function definitions in their own window
 Plug 'majutsushi/tagbar'
@@ -185,14 +215,14 @@ let g:PyFlakeSigns = 1
 let g:PyFlakeMaxLineLength = 79
 let g:PyFlakeAggressive = 5
 
-" Virtualenv integration, useful for YouCompleteMe autocompletion
-Plug 'jmcantrell/vim-virtualenv'
-let g:virtualenv_directory = '~/venvs'
-if !isdirectory(glob('~/venvs')) && has('nvim')
-     silent !mkdir ~/venvs
-     silent !virtualenv ~/venvs/neovim
-     silent !python ~/venvs/neovim/bin/pip install neovim
-endif
+" " Virtualenv integration, useful for YouCompleteMe autocompletion
+" Plug 'jmcantrell/vim-virtualenv'
+" let g:virtualenv_directory = '~/venvs'
+" if !isdirectory(glob('~/venvs')) && has('nvim')
+"      silent !mkdir ~/venvs
+"      silent !virtualenv ~/venvs/neovim
+"      silent !python ~/venvs/neovim/bin/pip install neovim
+" endif
 
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
@@ -211,6 +241,9 @@ if has('nvim')
     let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
     autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
     autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
+    " Rust
+    Plug 'rust-lang/rust.vim'
+    let g:ycm_rust_src_path = '/usr/local/bin/rust/src'
 endif
 
 call plug#end()

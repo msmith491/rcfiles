@@ -1,3 +1,4 @@
+#!/bin/bash
 shopt -s checkwinsize
 unamestr=$(uname)
 
@@ -29,11 +30,11 @@ fi
 # 100% pure Bash (no forking) function to determine the name of the current git branch
 gitbranch() {
     export GITBRANCH=""
- 
+
     local repo="${_GITBRANCH_LAST_REPO-}"
     local gitdir=""
     [[ ! -z "$repo" ]] && gitdir="$repo/.git"
-    
+
     # Unset the git repo if we're not in a repository
     if [[ "$PWD" != "$repo"* || ! -e "$gitdir"  ]]; then
         repo=""
@@ -54,7 +55,7 @@ gitbranch() {
             cur="${cur%/*}"
         done
     fi
-    
+
     # -z is the 'not' operator
     if [[ -z "$gitdir" ]]; then
         unset _GITBRANCH_LAST_REPO
@@ -81,7 +82,7 @@ gitbranch() {
     export GITBRANCH="$branch"
 }
 _mk_prompt() {
-    # Change the window title of X terminals 
+    # Change the window title of X terminals
     case $TERM in
         xterm*|rxvt*|Eterm)
             echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\007"
@@ -90,17 +91,17 @@ _mk_prompt() {
             echo -ne "\033_${USER}@${HOSTNAME%%.*}:${PWD/$HOME/~}\033\\"
           ;;
     esac
- 
+
     # Un-screw virtualenv stuff
     if [[ ! -z "${_OLD_VIRTUAL_PS1-}" ]]; then
         export PS1="$_OLD_VIRTUAL_PS1"
         unset _OLD_VIRTUAL_PS1
     fi
- 
+
     if [[ -z "${_MK_PROMPT_ORIG_PS1-}" ]]; then
         export _MK_PROMPT_ORIG_PS1="$PS1"
     fi
- 
+
     local prefix=()
     local jobcount="$(jobs -p | wc -l)"
     if [[ "$jobcount" -gt 0 ]]; then
@@ -108,17 +109,17 @@ _mk_prompt() {
         [[ "$jobcount" -gt 1 ]] && job="${job}s"
         prefix+=("$job")
     fi
- 
+
     gitbranch
     if [[ ! -z "$GITBRANCH" ]]; then
         prefix+=("${PS1_green}$GITBRANCH${PS1_reset}")
     fi
- 
+
     local virtualenv="${VIRTUAL_ENV##*/}"
     if [[ ! -z "$virtualenv" ]]; then
         prefix+=("${PS1_blue}$virtualenv${PS1_reset}")
     fi
- 
+
     PS1="$_MK_PROMPT_ORIG_PS1"
     if [[ ! -z "$prefix" ]]; then
         PS1="${PS1:${#_timestamp}}"
@@ -134,6 +135,38 @@ function refresh_ssh_keys {
             export SSH_AUTH_SOCK="$candidate"
             ssh-add -l 2>/dev/null && break
         done
+    fi
+}
+
+
+# Bindings for FZF
+export FZF_DEFAULT_OPTS='-m'
+
+fe() {
+    # fe - Open the selected files with the default editor
+    local files=$(fzf --query="$1" --select-1 --exit-0 | sed -e "s/\(.*\)/\'\1\'/")
+    local command="${EDITOR:-vim} -p $files"
+    [ -n "$files" ] && eval $command
+}
+
+fd() {
+    # fd - cd to selected directory
+    local dir
+    dir=$(find ${1:-*} -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf +m) &&
+    cd "$dir"
+}
+
+fh() {
+    # fh - repeat history
+    eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf +s --tac | sed 's/ *[0-9]* *//')
+}
+
+fkill() {
+    # fkill - kill process
+    pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
+    if [ "x$pid" != "x" ]
+    then
+        kill -${1:-9} $pid
     fi
 }
 
