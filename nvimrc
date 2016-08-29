@@ -1,4 +1,4 @@
-set nocompatible              " be iMproved, required
+
 filetype off                  " required
 
 set sidescroll=1        " Make side scrolling reasonable
@@ -52,12 +52,30 @@ nnoremap Y y$
 """""""""""""""""""""""""""""""""""
 """"""Neovim Specific Settings""""""
 """""""""""""""""""""""""""""""""""
+function! Gf()
+    if &buftype ==# "terminal"
+        :e <cfile>
+    else
+        normal! gf
+    endif
+endfunction
+
+function! OpenMyFile(f)
+    let a:folder=$HOME . '/Code/' . a:f
+    echo a:folder
+    execute 'tabe' a:folder
+    execute 'lcd' a:folder
+    execute 'vsp term://zsh'
+endfunction
+
 if has('nvim')
     " Increase terminal buffer 10x
     let g:terminal_scrollback_buffer_size = 10000
     let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
     let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
     let $TMUX_TUI_ENABLE_SHELL_CURSOR=1
+    " Workaround for bug #4299
+    nnoremap gf :call Gf()<CR>
 endif
 
 if exists('$TMUX')
@@ -80,7 +98,7 @@ noremap <Leader>b :buffers<CR>:buffer<Space>
 " Quick spelling fix
 noremap <Leader>f 1z=
 " Toggle Highlighting
-noremap <Leader>s :set spell!
+noremap <Leader>s :set spell!<CR>
 " Quick Search
 noremap <Leader>K :grep! "\b<C-R><C-W>\b"<CR>:cw<CR>
 " Delete all trailing whitespace
@@ -93,6 +111,8 @@ noremap <Leader>c :let @/ = ''<CR>
 noremap <Leader>gt :vsp term://zsh<CR> i
 " Easy Split Switch From Neovim Terminal Insert Mode
 tnoremap <Leader>e <C-\><C-n><C-w><C-w>
+" Easy Pylinting mnemonic "Python Code"
+noremap <Leader>,pc !pylint %
 
 """"
 " Rust keymappings
@@ -144,6 +164,7 @@ set background=dark
 " Shows git file changes to the left of line numbers
 Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
+let g:gitgutter_max_signs = 1000
 
 " " Amazing ctrl-p fuzzy searching plugin with better engine
 " Plug 'ctrlpvim/ctrlp.vim'
@@ -205,29 +226,28 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-speeddating'
 """""""""""""""""""""""""""""""""""""""
 
-" Auto Flake8 checks on file write
-Plug 'andviro/flake8-vim'
-let g:PyFlakeOnWrite = 1
-let g:PyFlakeDisableMessages = ''
-let g:PyFlakeCheckers = 'pep8,mccabe,frosted'
-let g:PyFlakeDefaultComplexity=10
-let g:PyFlakeSigns = 1
-let g:PyFlakeMaxLineLength = 79
-let g:PyFlakeAggressive = 5
+Plug 'scrooloose/syntastic'
+set laststatus=2
+set statusline+=%f
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
 
-" " Virtualenv integration, useful for YouCompleteMe autocompletion
-" Plug 'jmcantrell/vim-virtualenv'
-" let g:virtualenv_directory = '~/venvs'
-" if !isdirectory(glob('~/venvs')) && has('nvim')
-"      silent !mkdir ~/venvs
-"      silent !virtualenv ~/venvs/neovim
-"      silent !python ~/venvs/neovim/bin/pip install neovim
-" endif
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+" Python checker settings
+let g:syntastic_python_checkers = ["flake8"]
+let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
+let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go'] }
 
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
 
 Plug 'Glench/Vim-Jinja2-Syntax'
+
+Plug 'kshenoy/vim-signature'
 
 """"""""""""""""""""""""""""""""""""""""
 """""" Plugins Only I Care About """""""
@@ -244,6 +264,19 @@ if has('nvim')
     " Rust
     Plug 'rust-lang/rust.vim'
     let g:ycm_rust_src_path = '/usr/local/bin/rust/src'
+    Plug 'zah/nim.vim'
+    set tabstop=4
+    set shiftwidth=4
+    Plug 'fatih/vim-go'
+    let g:go_highlight_functions = 1
+    let g:go_highlight_methods = 1
+    let g:go_highlight_fields = 1
+    let g:go_highlight_types = 1
+    let g:go_highlight_operators = 1
+    let g:go_highlight_build_constraints = 1
+    let g:go_play_open_browser = 0
+    let g:go_bin_path = expand("~/.gotools")
+    let g:go_list_type = "quickfix"
 endif
 
 call plug#end()
@@ -272,3 +305,19 @@ if has('nvim')
 
     autocmd FileType d call StartDCD()
 endif
+
+
+""""""""""""""""""""""""""""""""""""""""
+""""""  Golang Settings and Stuff """"""
+""""""""""""""""""""""""""""""""""""""""
+
+autocmd FileType go setlocal noexpandtab
+autocmd FileType go setlocal listchars=tab:>·,trail:-,extends:>,precedes:<,nbsp:+   " Show visible characters for whitespace
+autocmd FileType go setlocal nolist
+
+""""""""""""""""""""""""""""""""""""""""
+""""""""" Mutt Email Settings  """""""""
+""""""""""""""""""""""""""""""""""""""""
+augroup filetypedetect
+  autocmd BufRead,BufNewFile *mutt-*              setfiletype mail
+augroup END
