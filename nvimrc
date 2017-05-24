@@ -49,6 +49,10 @@ set timeoutlen=300
 " Force `Y` behavior to match that of `C` and `D`
 nnoremap Y y$
 
+" Remap :W and :X to :w and :x because half the time I accidentally type them
+ca W w
+ca X x
+
 """""""""""""""""""""""""""""""""""
 """"""Neovim Specific Settings""""""
 """""""""""""""""""""""""""""""""""
@@ -60,18 +64,42 @@ function! Gf()
     endif
 endfunction
 
-function! OpenMyFile(f)
-    let a:folder=$HOME . '/Code/' . a:f
-    echo a:folder
-    execute 'tabe' a:folder
-    execute 'lcd' a:folder
-    execute 'vsp term://zsh'
+function! OpenDual(fl)
+    let l:folder=$HOME . '/Code/' . a:fl
+    exe 'tabe' . l:folder
+    exe 'lcd' . l:folder
+    vsp term://zsh
+    sp term://zsh
+    wincmd w
+endfunction
+
+function! OpenDuals(fs)
+    for fl in split(a:fs)
+        call OpenDual(fl)
+    endfor
+endfunction
+
+function! OpenTrip(fl)
+    let l:folder=$HOME . '/Code/' . a:fl
+    exe 'tabe' . l:folder
+    exe 'lcd' . l:folder
+    exe 'vsp' . l:folder
+    vsp term://zsh
+    sp term://zsh
+    wincmd w
+endfunction
+
+function! OpenTrips(fs)
+    for fl in split(a:fs)
+        call OpenTrip(fl)
+    endfor
 endfunction
 
 if has('nvim')
     " Increase terminal buffer 10x
     let g:terminal_scrollback_buffer_size = 10000
-    let g:python_host_prog=$HOME . "/venvs/neovim/bin/python"     " Ensure neovim is always using its own virtualenv
+    let g:python_host_prog=$HOME . "/venvs/neovim2/bin/python"     " Ensure neovim is always using its own virtualenv
+    let g:python3_host_prog=$HOME . "/venvs/neovim3/bin/python"     " Ensure neovim is always using its own virtualenv
     let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
     let $TMUX_TUI_ENABLE_SHELL_CURSOR=1
     " Workaround for bug #4299
@@ -108,7 +136,7 @@ noremap <Leader>rv :source $MYVIMRC<CR>
 " Easy Clear Last Search Highlight
 noremap <Leader>c :let @/ = ''<CR>
 " Easy Neovim Terminal Split
-noremap <Leader>gt :vsp term://zsh<CR> i
+noremap <Leader>gt :vsp term://zsh<CR>
 " Easy Split Switch From Neovim Terminal Insert Mode
 tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 " Easy Pylinting mnemonic "Python Code"
@@ -121,6 +149,10 @@ noremap <Leader>rp i println!("{:?}"
 
 noremap <Leader>rf i .fold(0, \|acc, item\| acc + item)
 
+""""
+" Slimv keymappings
+""""
+noremap <LocalLeader>wp :emenu Slimv.Edit.Paredit-Wrap
 
 " """""""""""""""""""""""""""""""""
 
@@ -144,18 +176,31 @@ let g:taboo_tab_format = ' %N : %P '
 Plug 'msmith491/python-syntax'
 let g:python_highlight_all = 1
 
-" YouCompleteMe Autocompletion plugin
-" Requires cmake package
-" You will need to run the install.py file in ~/.nvim/plugged/YouCompleteMe
-Plug 'Valloric/YouCompleteMe'
-let g:ycm_path_to_python_interpreter=$HOME . "/venvs/neovim/bin/python"
-let g:ycm_global_ycm_extra_conf=$HOME . "/ycm.py"
-let g:ycm_server_use_vim_stdout = 0
-let g:ycm_server_keep_logfiles = 1
-autocmd! User YouCompleteMe call youcompleteme#Enable()
-autocmd CompleteDone * pclose
-nnoremap <Leader>jd :YcmCompleter GoTo<CR>
-nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
+if !has('nvim')
+    " YouCompleteMe Autocompletion plugin
+    " Requires cmake package
+    " You will need to run the install.py file in ~/.nvim/plugged/YouCompleteMe
+    Plug 'Valloric/YouCompleteMe'
+    let g:ycm_path_to_python_interpreter=$HOME . "/venvs/neovim/bin/python"
+    let g:ycm_global_ycm_extra_conf=$HOME . "/ycm.py"
+    let g:ycm_server_use_vim_stdout = 0
+    let g:ycm_server_keep_logfiles = 1
+    autocmd! User YouCompleteMe call youcompleteme#Enable()
+    autocmd CompleteDone * pclose
+    nnoremap <Leader>jd :YcmCompleter GoTo<CR>
+    nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
+endif
+
+if has('nvim')
+    Plug 'Shougo/deoplete.nvim'
+    let g:deoplete#enable_at_startup = 1
+    let g:deoplete#enable_smart_case = 1
+    let g:deoplete#auto_complete_start_length = 3
+    inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+
+    Plug 'zchee/deoplete-jedi'
+    let deoplete#sources#jedi#show_docstring = 1
+endif
 
 " Theme
 Plug 'freeo/vim-kalisi'
@@ -166,28 +211,10 @@ Plug 'airblade/vim-gitgutter'
 let g:gitgutter_sign_column_always = 1
 let g:gitgutter_max_signs = 1000
 
-" " Amazing ctrl-p fuzzy searching plugin with better engine
-" Plug 'ctrlpvim/ctrlp.vim'
-" Plug 'FelikZ/ctrlp-py-matcher'
-" let g:ctrlp_max_files=0
-" let g:ctrlp_follow_symlinks=1
-" if has('python') || has('python3')
-"     let g:ctrlp_match_func = { 'match': 'pymatcher#PyMatch' }
-" endif
-
 " FuzzyFinder
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-let $FZF_DEFAULT_COMMAND = 'ag -g ""'
+let $FZF_DEFAULT_COMMAND = 'rg --files'
 nnoremap <C-p> :FZF<CR>
-
-" " If ag search is available, use that.  It's much faster than grep
-" if executable('ag')
-"     set grepprg=ag\ --nogroup\ --nocolor
-"     " Set ctrlp to use ag instead of grep
-"     " Using the `-u` flag to search in hidden files as well
-"     let g:ctrlp_user_command = 'ag %s -l -u --nocolor -g "" | ag -v "\.git" | ag -v "\.pyc"'
-"     let g:ctrlp_use_caching = 0
-" endif
 
 " Better file browser
 Plug 'scrooloose/nerdtree'
@@ -255,6 +282,7 @@ Plug 'kshenoy/vim-signature'
 if has('nvim')
     " Lisp plugin
     Plug 'kovisoft/slimv'
+    let g:slimv_leader = ";"
     " Dlang Autocomplete/GoTo def
     Plug 'Hackerpilot/DCD'
     Plug 'idanarye/vim-dutyl'
@@ -264,9 +292,12 @@ if has('nvim')
     " Rust
     Plug 'rust-lang/rust.vim'
     let g:ycm_rust_src_path = '/usr/local/bin/rust/src'
+    let g:rustfmt_autosave = 1
+    let g:syntastic_rust_checkers = ['rustc']
     Plug 'zah/nim.vim'
     set tabstop=4
     set shiftwidth=4
+    " Go
     Plug 'fatih/vim-go'
     let g:go_highlight_functions = 1
     let g:go_highlight_methods = 1
@@ -277,6 +308,10 @@ if has('nvim')
     let g:go_play_open_browser = 0
     let g:go_bin_path = expand("~/.gotools")
     let g:go_list_type = "quickfix"
+    " Scala
+    Plug 'derekwyatt/vim-scala'
+    " Perl
+    Plug 'vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' }
 endif
 
 call plug#end()
