@@ -176,21 +176,6 @@ let g:taboo_tab_format = ' %N : %P '
 Plug 'msmith491/python-syntax'
 let g:python_highlight_all = 1
 
-if !has('nvim')
-    " YouCompleteMe Autocompletion plugin
-    " Requires cmake package
-    " You will need to run the install.py file in ~/.nvim/plugged/YouCompleteMe
-    Plug 'Valloric/YouCompleteMe'
-    let g:ycm_path_to_python_interpreter=$HOME . "/venvs/neovim/bin/python"
-    let g:ycm_global_ycm_extra_conf=$HOME . "/ycm.py"
-    let g:ycm_server_use_vim_stdout = 0
-    let g:ycm_server_keep_logfiles = 1
-    autocmd! User YouCompleteMe call youcompleteme#Enable()
-    autocmd CompleteDone * pclose
-    nnoremap <Leader>jd :YcmCompleter GoTo<CR>
-    nnoremap <Leader>gd :YcmCompleter GetDoc<CR>
-endif
-
 if has('nvim')
     Plug 'Shougo/deoplete.nvim'
     let g:deoplete#enable_at_startup = 1
@@ -199,7 +184,7 @@ if has('nvim')
     inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
 
     Plug 'zchee/deoplete-jedi'
-    let deoplete#sources#jedi#show_docstring = 1
+    " let deoplete#sources#jedi#show_docstring = 1
 endif
 
 " Theme
@@ -291,8 +276,10 @@ if has('nvim')
     autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
     " Rust
     Plug 'rust-lang/rust.vim'
-    let g:ycm_rust_src_path = '/usr/local/bin/rust/src'
     let g:rustfmt_autosave = 1
+    let g:syntastic_rust_rustc_exe = 'cargo check'
+    let g:syntastic_rust_rustc_fname = ''
+    let g:syntastic_rust_rustc_args = '--'
     let g:syntastic_rust_checkers = ['rustc']
     Plug 'zah/nim.vim'
     set tabstop=4
