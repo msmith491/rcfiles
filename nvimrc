@@ -53,6 +53,11 @@ nnoremap Y y$
 ca W w
 ca X x
 
+" Move right 15 characters
+nnoremap <C-l> 15zl
+" Move left 15 characters
+nnoremap <C-h> 15zh
+
 """""""""""""""""""""""""""""""""""
 """"""Neovim Specific Settings""""""
 """""""""""""""""""""""""""""""""""
@@ -104,6 +109,8 @@ if has('nvim')
     let $TMUX_TUI_ENABLE_SHELL_CURSOR=1
     " Workaround for bug #4299
     nnoremap gf :call Gf()<CR>
+    " Neovim-remote for terminal buffers
+    let $VISUAL = 'nvr -cc split --remote-wait'
 endif
 
 if exists('$TMUX')
@@ -141,6 +148,8 @@ noremap <Leader>gt :vsp term://zsh<CR>
 tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 " Easy Pylinting mnemonic "Python Code"
 noremap <Leader>,pc !pylint %
+" Short UUID Generation in quotes
+nnoremap <Leader>u mm:r!uuidgen\|cut -c 1-8<CR>dW"_dd`mi""<Esc>hp
 
 """"
 " Rust keymappings
@@ -168,6 +177,12 @@ endif
 """"""""""""""""""""""""""""""""""""""""
 call plug#begin('~/.config/nvim/plugged')
 
+"Mustache/Handlebars syntax"
+Plug 'mustache/vim-mustache-handlebars'
+
+"Powershell syntax"
+Plug 'PProvost/vim-ps1'
+
 " Easier Tabline Modification
 Plug 'gcmt/taboo.vim'
 let g:taboo_tab_format = ' %N : %P '
@@ -184,7 +199,10 @@ if has('nvim')
     inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
 
     Plug 'zchee/deoplete-jedi'
-    " let deoplete#sources#jedi#show_docstring = 1
+    let deoplete#sources#jedi#show_docstring = 0
+
+    " Forces preview window to close after completion
+    autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
 endif
 
 " Theme
@@ -193,7 +211,7 @@ set background=dark
 
 " Shows git file changes to the left of line numbers
 Plug 'airblade/vim-gitgutter'
-let g:gitgutter_sign_column_always = 1
+set signcolumn=yes
 let g:gitgutter_max_signs = 1000
 
 " FuzzyFinder
@@ -201,10 +219,19 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 let $FZF_DEFAULT_COMMAND = 'rg --files'
 nnoremap <C-p> :FZF<CR>
 
+" Easy alignment of lines
+Plug 'junegunn/vim-easy-align'
+xmap ga <Plug>(EasyAlign)
+nmap ga <Plug>(EasyAlign)
+
+
 " Better file browser
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
 let NERDTreeIgnore = ['\.pyc$']
+
+" Tag generation
+Plug 'ludovicchabant/vim-gutentags'
 
 " Function definitions in their own window
 Plug 'majutsushi/tagbar'
@@ -252,7 +279,9 @@ let g:syntastic_check_on_wq = 0
 " Python checker settings
 let g:syntastic_python_checkers = ["flake8"]
 let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
-let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go'] }
+let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
+
+
 
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
@@ -326,8 +355,18 @@ if has('nvim')
     endfunction
 
     autocmd FileType d call StartDCD()
+
+    " Terminal mode autocommands to turn off stuff I don't want
+    au TermOpen * setlocal norelativenumber
+    au TermOpen * setlocal nonumber
+    au TermOpen * setlocal signcolumn=no
 endif
 
+""""""""""""""""""""""""""""""""""
+""""""  Python AutoCommands """"""
+""""""""""""""""""""""""""""""""""
+autocmd Filetype python setlocal indentkeys-=<:>
+autocmd FileType python setlocal indentkeys-=:
 
 """"""""""""""""""""""""""""""""""""""""
 """"""  Golang Settings and Stuff """"""

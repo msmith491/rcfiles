@@ -1,7 +1,7 @@
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
-alias vi=nvim
+alias vi="NVIM_LISTEN_ADDRESS=/tmp/nvimsocket nvim"
 alias vim=nvim
 alias cleanpy="find . \( -name '*.pyc' -o -name '*.pyo' \) -exec rm -f {} +"
 
@@ -80,8 +80,6 @@ plugins=(git)
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin:/usr/local/mysql/bin:${HOME}/.cargo/bin"
 # export MANPATH="/usr/local/man:$MANPATH"
 
-source $ZSH/oh-my-zsh.sh
-
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
@@ -139,3 +137,11 @@ fkill() {
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+fpath=(~/_rg $fpath)
+
+# Binding reverse history search to fzf function
+zle -N fh
+bindkey "^r" fh
+
+source $ZSH/oh-my-zsh.sh
