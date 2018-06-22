@@ -69,6 +69,15 @@ function! Gf()
     endif
 endfunction
 
+function! OpenGoDual(fl)
+    let l:folder=$HOME . '/go/src/github.com/' . a:fl
+    exe 'tabe' . l:folder
+    exe 'lcd' . l:folder
+    vsp term://zsh
+    sp term://zsh
+    wincmd w
+endfunction
+
 function! OpenDual(fl)
     let l:folder=$HOME . '/Code/' . a:fl
     exe 'tabe' . l:folder
@@ -232,6 +241,7 @@ let NERDTreeIgnore = ['\.pyc$']
 
 " Tag generation
 Plug 'ludovicchabant/vim-gutentags'
+let g:gutentags_cache_dir = $HOME . '/.gutencache'
 
 " Function definitions in their own window
 Plug 'majutsushi/tagbar'
