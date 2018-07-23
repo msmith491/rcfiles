@@ -93,6 +93,16 @@ function! OpenDuals(fs)
     endfor
 endfunction
 
+function! OpenGoTrip(fl)
+    let l:folder=$HOME . '/go/src/github.com/' . a:fl
+    exe 'tabe' . l:folder
+    exe 'lcd' . l:folder
+    exe 'vsp' . l:folder
+    vsp term://zsh
+    sp term://zsh
+    wincmd w
+endfunction
+
 function! OpenTrip(fl)
     let l:folder=$HOME . '/Code/' . a:fl
     exe 'tabe' . l:folder
@@ -385,6 +395,7 @@ autocmd FileType python setlocal indentkeys-=:
 autocmd FileType go setlocal noexpandtab
 autocmd FileType go setlocal listchars=tab:>·,trail:-,extends:>,precedes:<,nbsp:+   " Show visible characters for whitespace
 autocmd FileType go setlocal nolist
+autocmd FileType go setlocal colorcolumn=119
 
 """"""""""""""""""""""""""""""""""""""""
 """"""""" Mutt Email Settings  """""""""
