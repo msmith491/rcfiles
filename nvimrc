@@ -1,4 +1,3 @@
-
 filetype off                  " required
 
 set sidescroll=1        " Make side scrolling reasonable
@@ -36,6 +35,7 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 syntax on               " turn syntax highlighting on by default
 filetype on             " detect type of file
 filetype indent on      " load indent file for specific file type
+match ErrorMsg '\s\+$'
 
 " Fix backspace/delete key issues
 set backspace=indent,eol,start      " Setting backspace to behave in a sane fashion
@@ -69,19 +69,40 @@ function! Gf()
     endif
 endfunction
 
-function! OpenGoDual(fl)
-    let l:folder=$HOME . '/go/src/github.com/' . a:fl
+function! OpenGoDatDual(fl)
+    let l:folder=$HOME . '/go/src/github.com/Datera/' . a:fl
     exe 'tabe' . l:folder
-    exe 'lcd' . l:folder
+    exe 'tcd' . l:folder
     vsp term://zsh
     sp term://zsh
     wincmd w
 endfunction
 
+function! OpenGoDatDuals(fs)
+    for fl in split(a:fs)
+        call OpenGoDual(fl)
+    endfor
+endfunction
+
+function! OpenGoDual(fl)
+    let l:folder=$HOME . '/go/src/github.com/' . a:fl
+    exe 'tabe' . l:folder
+    exe 'tcd' . l:folder
+    vsp term://zsh
+    sp term://zsh
+    wincmd w
+endfunction
+
+function! OpenGoDuals(fs)
+    for fl in split(a:fs)
+        call OpenGoDual(fl)
+    endfor
+endfunction
+
 function! OpenDual(fl)
     let l:folder=$HOME . '/Code/' . a:fl
     exe 'tabe' . l:folder
-    exe 'lcd' . l:folder
+    exe 'tcd' . l:folder
     vsp term://zsh
     sp term://zsh
     wincmd w
@@ -93,20 +114,10 @@ function! OpenDuals(fs)
     endfor
 endfunction
 
-function! OpenGoTrip(fl)
-    let l:folder=$HOME . '/go/src/github.com/' . a:fl
-    exe 'tabe' . l:folder
-    exe 'lcd' . l:folder
-    exe 'vsp' . l:folder
-    vsp term://zsh
-    sp term://zsh
-    wincmd w
-endfunction
-
 function! OpenTrip(fl)
     let l:folder=$HOME . '/Code/' . a:fl
     exe 'tabe' . l:folder
-    exe 'lcd' . l:folder
+    exe 'tcd' . l:folder
     exe 'vsp' . l:folder
     vsp term://zsh
     sp term://zsh
@@ -117,6 +128,97 @@ function! OpenTrips(fs)
     for fl in split(a:fs)
         call OpenTrip(fl)
     endfor
+endfunction
+
+function! OpenPlz(fs)
+    let l:gofolder=$HOME . '/go/src/github.com/'
+    let l:godatfolder=l:gofolder . 'Datera/'
+    let l:codefolder=$HOME . '/Code/'
+    for fl in split(a:fs)
+        if !empty(glob(l:codefolder . fl))
+            call OpenTrip(fl)
+            continue
+        endif
+        let l:ffolder=glob(l:gofolder . '*/' . fl)
+        if !empty(l:ffolder)
+            let l:p=split(l:ffolder, '/')
+            call OpenGoDual(join([l:p[-2], l:p[-1]], '/'))
+            continue
+        endif
+    endfor
+endfunction
+
+let g:plz_save=$HOME . '/plz_save.session'
+
+function! PlzSave()
+    let l:origbuff=nvim_get_current_buf()
+    let l:origtab=nvim_get_current_tabpage()
+    let l:session=[]
+    " Iterate through open tabs
+    for l:tnum in nvim_list_tabpages()
+        " Switch to the tab
+        call nvim_set_current_tabpage(l:tnum)
+        let l:buffs=[]
+        let l:terms=0
+        " Iterate through the buffers for this tab
+        for l:tb in tabpagebuflist()
+            " Save the buffer filepath
+            let l:bi=getbufinfo(l:tb)[0]
+            let l:f=l:bi['name']
+            let l:n=l:bi['lnum']
+            " Count terminal windows
+            if l:f =~ 'term:'
+                let l:terms += 1
+            " Normalize NERDtree entries to be parent directories
+            elseif l:f =~ 'NERD_tree'
+                let l:f='/' . join(split(l:f, '/')[0:-2], '/')
+                call add(l:buffs, [l:f, l:n])
+            else
+                call add(l:buffs, [l:f, l:n])
+            endif
+        endfor
+        " Key everything by the working directory
+        call add(l:session, [getcwd(), {'buffs': l:buffs, 'terms': l:terms}])
+    endfor
+    call nvim_set_current_tabpage(l:origtab)
+    call nvim_set_current_buf(l:origbuff)
+    echo 'Saving session to ' . g:plz_save
+    " Write session info to file
+    call SaveVar(l:session, g:plz_save)
+endfunction
+
+function! PlzRestore()
+    let l:session=ReadVar(g:plz_save)
+    for l:elem in l:session
+        let [l:cwd, l:d]=l:elem
+        let l:buffs=l:d['buffs']
+        let l:terms=l:d['terms']
+        " There should never be more than six files open
+        " And we want different window configs depending on number
+        exe 'tabe ' . l:buffs[0][0]
+        exe 'tcd ' . l:cwd
+        for l:b in l:buffs[1:2]
+            exe 'sp ' . l:b[0]
+        endfor
+        for l:b in l:buffs[4:4]
+            exe 'vsp ' . l:b[0]
+        endif
+    endfor
+endfunction
+
+function! SaveVar(var, file)
+    " turn the var to a string that vimscript understands
+    let l:serialized = string(a:var)
+    " dump this string to a file
+    call writefile([l:serialized], a:file)
+endfunction
+
+function! ReadVar(file)
+    " retrieve string from the file
+    let l:serialized = readfile(a:file)[0]
+    " turn it back to a vimscript variable
+    exe "let result = " . l:serialized
+    return result
 endfunction
 
 if has('nvim')
@@ -298,6 +400,8 @@ let g:syntastic_check_on_open = 1
 let g:syntastic_check_on_wq = 0
 " Python checker settings
 let g:syntastic_python_checkers = ["flake8"]
+let g:syntastic_python_python_exec = '/usr/local/bin/python3'
+let g:syntastic_python_flake8_exe = 'python3 -m flake8'
 let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
 let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
 
@@ -315,14 +419,14 @@ Plug 'kshenoy/vim-signature'
 """"""""""""""""""""""""""""""""""""""""
 if has('nvim')
     " Lisp plugin
-    Plug 'kovisoft/slimv'
-    let g:slimv_leader = ";"
-    " Dlang Autocomplete/GoTo def
-    Plug 'Hackerpilot/DCD'
-    Plug 'idanarye/vim-dutyl'
-    let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
-    autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
-    autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
+    " Plug 'kovisoft/slimv'
+    " let g:slimv_leader = ";"
+    " " Dlang Autocomplete/GoTo def
+    " Plug 'Hackerpilot/DCD'
+    " Plug 'idanarye/vim-dutyl'
+    " let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
+    " autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
+    " autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
     " Rust
     Plug 'rust-lang/rust.vim'
     let g:rustfmt_autosave = 1
@@ -347,7 +451,7 @@ if has('nvim')
     " Scala
     Plug 'derekwyatt/vim-scala'
     " Perl
-    Plug 'vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' }
+    " Plug 'vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' }
 endif
 
 call plug#end()
@@ -363,18 +467,18 @@ colorscheme kalisi
 " Dlang settings and servers
 if has('nvim')
     " Update Dlang autocomplete client/server locations
-    call dutyl#register#tool('dcd-client',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-client')
-    call dutyl#register#tool('dcd-server',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-server')
+    " call dutyl#register#tool('dcd-client',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-client')
+    " call dutyl#register#tool('dcd-server',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-server')
 
-    function StartDCD()
-        let testvar = system('ps -ef | grep dcd-server | grep -v grep')
-        if testvar == ''
-            let server = 'tmux new -s dcd-server -d "' . $HOME . '/.config/nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
-            exec "!" . server
-        endif
-    endfunction
+    " function StartDCD()
+    "     let testvar = system('ps -ef | grep dcd-server | grep -v grep')
+    "     if testvar == ''
+    "         let server = 'tmux new -s dcd-server -d "' . $HOME . '/.config/nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
+    "         exec "!" . server
+    "     endif
+    " endfunction
 
-    autocmd FileType d call StartDCD()
+    " autocmd FileType d call StartDCD()
 
     " Terminal mode autocommands to turn off stuff I don't want
     au TermOpen * setlocal norelativenumber
@@ -387,6 +491,12 @@ endif
 """"""""""""""""""""""""""""""""""
 autocmd Filetype python setlocal indentkeys-=<:>
 autocmd FileType python setlocal indentkeys-=:
+
+""""""""""""""""""""""""""""""""""
+""""""  Yaml AutoCommands """"""
+""""""""""""""""""""""""""""""""""
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+autocmd FileType yaml setlocal indentkeys-=:
 
 """"""""""""""""""""""""""""""""""""""""
 """"""  Golang Settings and Stuff """"""
@@ -401,5 +511,8 @@ autocmd FileType go setlocal colorcolumn=119
 """"""""" Mutt Email Settings  """""""""
 """"""""""""""""""""""""""""""""""""""""
 augroup filetypedetect
-  autocmd BufRead,BufNewFile *mutt-*              setfiletype mail
+  autocmd BufRead,BufNewFile *mutt-*              setfiletype markdown
 augroup END
+" Add format option 'w' to add trailing white space, indicating that paragraph
+" continues on next line. This is to be used with mutt's 'text_flowed' option.
+autocmd FileType mail setlocal formatoptions+=w tw=72 fo=watqc nojs nosmartindent
