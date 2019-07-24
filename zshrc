@@ -4,6 +4,9 @@ export ZSH="$HOME/.oh-my-zsh"
 alias vi="NVIM_LISTEN_ADDRESS=/tmp/nvimsocket nvim"
 alias vim=nvim
 alias cleanpy="find . \( -name '*.pyc' -o -name '*.pyo' \) -exec rm -f {} +"
+if which kitty > /dev/null; then
+    alias ssh="kitty +kitten ssh"
+fi
 
 export NVIM_TUI_ENABLE_CURSOR_SHAPE=1
 # Set name of the theme to load.
@@ -147,4 +150,26 @@ fpath=(~/_rg $fpath)
 zle -N fh
 bindkey "^r" fh
 
+# SUDO PLUGIN
+sudo-command-line() {
+    [[ -z $BUFFER ]] && zle up-history
+    if [[ $BUFFER == sudo\ * ]]; then
+        LBUFFER="${LBUFFER#sudo }"
+    elif [[ $BUFFER == $EDITOR\ * ]]; then
+        LBUFFER="${LBUFFER#$EDITOR }"
+        LBUFFER="sudoedit $LBUFFER"
+    elif [[ $BUFFER == sudoedit\ * ]]; then
+        LBUFFER="${LBUFFER#sudoedit }"
+        LBUFFER="$EDITOR $LBUFFER"
+    else
+        LBUFFER="sudo $LBUFFER"
+    fi
+}
+zle -N sudo-command-line
+# Defined shortcut keys: [Esc] [Esc]
+bindkey "\e\e" sudo-command-line
+
 source $ZSH/oh-my-zsh.sh
+PATH=$PATH:~/.local/bin/
+PATH=$PATH:~/.local/go/bin/
+PATH=$PATH:~/go/bin/

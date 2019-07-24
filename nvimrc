@@ -69,8 +69,8 @@ function! Gf()
     endif
 endfunction
 
-function! OpenGoDatDual(fl)
-    let l:folder=$HOME . '/go/src/github.com/Datera/' . a:fl
+function! OpenDual(fl, fd)
+    let l:folder=a:fd . a:fl
     exe 'tabe' . l:folder
     exe 'tcd' . l:folder
     vsp term://zsh
@@ -78,44 +78,8 @@ function! OpenGoDatDual(fl)
     wincmd w
 endfunction
 
-function! OpenGoDatDuals(fs)
-    for fl in split(a:fs)
-        call OpenGoDual(fl)
-    endfor
-endfunction
-
-function! OpenGoDual(fl)
-    let l:folder=$HOME . '/go/src/github.com/' . a:fl
-    exe 'tabe' . l:folder
-    exe 'tcd' . l:folder
-    vsp term://zsh
-    sp term://zsh
-    wincmd w
-endfunction
-
-function! OpenGoDuals(fs)
-    for fl in split(a:fs)
-        call OpenGoDual(fl)
-    endfor
-endfunction
-
-function! OpenDual(fl)
-    let l:folder=$HOME . '/Code/' . a:fl
-    exe 'tabe' . l:folder
-    exe 'tcd' . l:folder
-    vsp term://zsh
-    sp term://zsh
-    wincmd w
-endfunction
-
-function! OpenDuals(fs)
-    for fl in split(a:fs)
-        call OpenDual(fl)
-    endfor
-endfunction
-
-function! OpenTrip(fl)
-    let l:folder=$HOME . '/Code/' . a:fl
+function! OpenTrip(fl, fd)
+    let l:folder=a:fd . a:fl
     exe 'tabe' . l:folder
     exe 'tcd' . l:folder
     exe 'vsp' . l:folder
@@ -124,25 +88,23 @@ function! OpenTrip(fl)
     wincmd w
 endfunction
 
-function! OpenTrips(fs)
-    for fl in split(a:fs)
-        call OpenTrip(fl)
-    endfor
-endfunction
-
 function! OpenPlz(fs)
     let l:gofolder=$HOME . '/go/src/github.com/'
-    let l:godatfolder=l:gofolder . 'Datera/'
     let l:codefolder=$HOME . '/Code/'
+    let l:workspacefolder=$HOME . '/workspace/'
     for fl in split(a:fs)
         if !empty(glob(l:codefolder . fl))
-            call OpenTrip(fl)
+            call OpenTrip(fl, l:codefolder)
+            continue
+        endif
+        if !empty(glob(l:workspacefolder . fl))
+            call OpenTrip(fl, l:workspacefolder)
             continue
         endif
         let l:ffolder=glob(l:gofolder . '*/' . fl)
         if !empty(l:ffolder)
             let l:p=split(l:ffolder, '/')
-            call OpenGoDual(join([l:p[-2], l:p[-1]], '/'))
+            call OpenDual(join([l:p[-2], l:p[-1]], '/'), l:gofolder)
             continue
         endif
     endfor
@@ -221,17 +183,67 @@ function! ReadVar(file)
     return result
 endfunction
 
+""""""""""""""""""""""""""""""""""""""""
+" Python Jump To Declaration Functions "
+""""""""""""""""""""""""""""""""""""""""
+function! RgFindDefMatch(s, n)
+    let find = "'def " . a:s . "\\('"
+    let findv = "def " . a:s . "\("
+    let output = trim(
+            \ system("rg " . l:find . " -l | head -n " . a:n . " | tail -n 1"))
+    return [l:output, l:findv]
+endfunction
+
+function! RgFindClassMatch(s, n)
+    let find = "'class " . a:s . "[\\(|:]'"
+    let findv = "class " . a:s
+    let output = trim(
+        \ system("rg " . l:find . " -l | head -n " . a:n . " | tail -n 1"))
+    return [l:output, l:findv]
+endfunction
+
+function! OpenSearchFile(file, search)
+    exe "sp " . a:file
+    exe "normal /" . a:search . "\<cr>"
+    let @/ = a:search
+    normal zz
+endfunction
+
+function! PythonJumpToDefinition(n)
+    let word = expand('<cword>')
+    let [output, findv] = RgFindDefMatch(l:word, a:n)
+    if l:output != ""
+        call OpenSearchFile(l:output, l:findv)
+    else
+        let [output, findv] = RgFindClassMatch(l:word, a:n)
+        if l:output != ""
+            call OpenSearchFile(l:output, l:findv)
+        else
+            echo "No defition found for 'def|class " . word . "'"
+        endif
+    endif
+endfunction
+
+function! PythonJumpToAssignment()
+    let word = expand('<cword>')
+    let find = " \\<" . l:word . " = "
+    exe "normal ?" . l:find . "\<cr>"
+    let @/ = l:find
+endfunction
+
 if has('nvim')
     " Increase terminal buffer 10x
     let g:terminal_scrollback_buffer_size = 10000
     let g:python_host_prog=$HOME . "/venvs/neovim2/bin/python"     " Ensure neovim is always using its own virtualenv
     let g:python3_host_prog=$HOME . "/venvs/neovim3/bin/python"     " Ensure neovim is always using its own virtualenv
-    let $NVIM_TUI_ENABLE_CURSOR_SHAPE=1     " Force use of I-bar for insert mode
-    let $TMUX_TUI_ENABLE_SHELL_CURSOR=1
+    set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
+      \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
+      \,sm:block-blinkwait175-blinkoff150-blinkon175
     " Workaround for bug #4299
     nnoremap gf :call Gf()<CR>
     " Neovim-remote for terminal buffers
-    let $VISUAL = 'nvr -cc split --remote-wait'
+    let $GIT_EDITOR = 'nvr -cc split --remote-wait'
+    autocmd FileType gitcommit set bufhidden=delete
 endif
 
 if exists('$TMUX')
@@ -271,6 +283,12 @@ tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 noremap <Leader>,pc !pylint %
 " Short UUID Generation in quotes
 nnoremap <Leader>u mm:r!uuidgen\|cut -c 1-8<CR>dW"_dd`mi""<Esc>hp
+" Jump to Python Definiton
+nnoremap <Leader>pd :call PythonJumpToDefinition(1)<CR>
+nnoremap <Leader>p2d :call PythonJumpToDefinition(2)<CR>
+nnoremap <Leader>p3d :call PythonJumpToDefinition(3)<CR>
+" Jump to Python Assignment
+nnoremap <Leader>pa :call PythonJumpToAssignment()<CR>
 
 """"
 " Rust keymappings
@@ -319,7 +337,7 @@ if has('nvim')
     let g:deoplete#auto_complete_start_length = 3
     inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
 
-    Plug 'zchee/deoplete-jedi'
+    Plug 'deoplete-plugins/deoplete-jedi'
     let deoplete#sources#jedi#show_docstring = 0
 
     " Forces preview window to close after completion
@@ -404,6 +422,7 @@ let g:syntastic_python_python_exec = '/usr/local/bin/python3'
 let g:syntastic_python_flake8_exe = 'python3 -m flake8'
 let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
 let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
+let g:syntastic_sh_checkers = ['shellcheck']
 
 
 
