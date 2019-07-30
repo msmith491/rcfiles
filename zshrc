@@ -173,3 +173,11 @@ source $ZSH/oh-my-zsh.sh
 PATH=$PATH:~/.local/bin/
 PATH=$PATH:~/.local/go/bin/
 PATH=$PATH:~/go/bin/
+
+# Hidden creds
+CREDSFILE=~/.config/.creds
+if [ -e $CREDSFILE ]; then
+    source $CREDSFILE
+else
+    echo "No creds file found at $CREDSFILE"
+fi
