@@ -88,7 +88,7 @@ function! OpenTrip(fl, fd)
     wincmd w
 endfunction
 
-function! OpenPlz(fs)
+function! OP(fs)
     let l:gofolder=$HOME . '/go/src/github.com/'
     let l:codefolder=$HOME . '/Code/'
     let l:workspacefolder=$HOME . '/workspace/'
@@ -231,6 +231,10 @@ function! PythonJumpToAssignment()
     let @/ = l:find
 endfunction
 
+function! JenkinsfileLint()
+    exe "!curl --user ". $JENKINS_USER . ":" . $JENKINS_TOKEN . " -X POST -F 'jenkinsfile=<" . expand("%:p") . "' " . $JENKINS_URL . "/pipeline-model-converter/validate"
+endfunction
+
 if has('nvim')
     " Increase terminal buffer 10x
     let g:terminal_scrollback_buffer_size = 10000
@@ -283,13 +287,6 @@ tnoremap <Leader>e <C-\><C-n><C-w><C-w>
 noremap <Leader>,pc !pylint %
 " Short UUID Generation in quotes
 nnoremap <Leader>u mm:r!uuidgen\|cut -c 1-8<CR>dW"_dd`mi""<Esc>hp
-" Jump to Python Definiton
-nnoremap <Leader>pd :call PythonJumpToDefinition(1)<CR>
-nnoremap <Leader>p2d :call PythonJumpToDefinition(2)<CR>
-nnoremap <Leader>p3d :call PythonJumpToDefinition(3)<CR>
-" Jump to Python Assignment
-nnoremap <Leader>pa :call PythonJumpToAssignment()<CR>
-
 """"
 " Rust keymappings
 """"
@@ -420,6 +417,7 @@ let g:syntastic_check_on_wq = 0
 let g:syntastic_python_checkers = ["flake8"]
 let g:syntastic_python_python_exec = '/usr/local/bin/python3'
 let g:syntastic_python_flake8_exe = 'python3 -m flake8'
+let g:syntastic_yaml_checkers = ['yamllint']
 let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
 let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
 let g:syntastic_sh_checkers = ['shellcheck']
@@ -510,6 +508,13 @@ endif
 """"""""""""""""""""""""""""""""""
 autocmd Filetype python setlocal indentkeys-=<:>
 autocmd FileType python setlocal indentkeys-=:
+" Jump to Python Definiton
+autocmd FileType python nnoremap gd :call PythonJumpToDefinition(1)<CR>
+autocmd FileType python nnoremap g2d :call PythonJumpToDefinition(2)<CR>
+autocmd FileType python nnoremap g3d :call PythonJumpToDefinition(3)<CR>
+" Jump to Python Assignment
+autocmd FileType python nnoremap ga :call PythonJumpToAssignment()<CR>
+
 
 """"""""""""""""""""""""""""""""""
 """"""  Yaml AutoCommands """"""
@@ -529,9 +534,16 @@ autocmd FileType go setlocal colorcolumn=119
 """"""""""""""""""""""""""""""""""""""""
 """"""""" Mutt Email Settings  """""""""
 """"""""""""""""""""""""""""""""""""""""
-augroup filetypedetect
-  autocmd BufRead,BufNewFile *mutt-*              setfiletype markdown
-augroup END
+autocmd BufRead,BufNewFile *mutt-*              setfiletype markdown
 " Add format option 'w' to add trailing white space, indicating that paragraph
 " continues on next line. This is to be used with mutt's 'text_flowed' option.
 autocmd FileType mail setlocal formatoptions+=w tw=72 fo=watqc nojs nosmartindent
+
+
+""""""""""""""""""""""""""""""""""""""""
+"""""""" Jenkinsfile Settings  """""""""
+""""""""""""""""""""""""""""""""""""""""
+autocmd BufRead,BufNewFile *Jenkinsfile*          setfiletype groovy
+autocmd BufRead,BufNewFile *jenkinsfile*          setfiletype groovy
+autocmd BufRead,BufNewFile *Jenkinsfile*          nnoremap gc :call JenkinsfileLint()<CR>
+autocmd BufRead,BufNewFile *jenkinsfile*          nnoremap gc :call JenkinsfileLint()<CR>
