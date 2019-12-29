@@ -58,6 +58,10 @@ nnoremap <C-l> 15zl
 " Move left 15 characters
 nnoremap <C-h> 15zh
 
+function! FileOffset()
+    echo line2byte(line('.')) + col('.') - 1
+endfunction
+
 """""""""""""""""""""""""""""""""""
 """"""Neovim Specific Settings""""""
 """""""""""""""""""""""""""""""""""
@@ -235,36 +239,45 @@ function! JenkinsfileLint()
     exe "!curl --user ". $JENKINS_USER . ":" . $JENKINS_TOKEN . " -X POST -F 'jenkinsfile=<" . expand("%:p") . "' " . $JENKINS_URL . "/pipeline-model-converter/validate"
 endfunction
 
-if has('nvim')
-    " Increase terminal buffer 10x
-    let g:terminal_scrollback_buffer_size = 10000
-    let g:python_host_prog=$HOME . "/venvs/neovim2/bin/python"     " Ensure neovim is always using its own virtualenv
-    let g:python3_host_prog=$HOME . "/venvs/neovim3/bin/python"     " Ensure neovim is always using its own virtualenv
-    set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
-      \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
-      \,sm:block-blinkwait175-blinkoff150-blinkon175
-    " Workaround for bug #4299
-    nnoremap gf :call Gf()<CR>
-    " Neovim-remote for terminal buffers
-    let $GIT_EDITOR = 'nvr -cc split --remote-wait'
-    autocmd FileType gitcommit set bufhidden=delete
-endif
+function! UmlDisplay()
+    exe "!java -jar " . $HOME . "/.config/nvim/plugged/vim-slumlord/plantuml.jar " . expand("%")
+endfunction
 
-if exists('$TMUX')
-  let &t_SI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=1\x7\<Esc>\\"
-  let &t_EI = "\<Esc>Ptmux;\<Esc>\<Esc>]50;CursorShape=0\x7\<Esc>\\"
-endif
+
+" Increase terminal buffer 10x
+let g:terminal_scrollback_buffer_size = 10000
+let g:python_host_prog=$HOME . "/venvs/neovim2/bin/python"     " Ensure neovim is always using its own virtualenv
+let g:python3_host_prog=$HOME . "/venvs/neovim3/bin/python"     " Ensure neovim is always using its own virtualenv
+set guicursor=n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50
+  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
+  \,sm:block-blinkwait175-blinkoff150-blinkon175
+" Workaround for bug #4299
+nnoremap gf :call Gf()<CR>
+" Neovim-remote for terminal buffers
+let $GIT_EDITOR = 'nvr -cc split --remote-wait'
+autocmd FileType gitcommit set bufhidden=delete
+
 " Fixing Neovim Meta Character Terminal Word Jumping
 tnoremap <A-b> <Esc>b
 tnoremap <A-f> <Esc>f
 tnoremap <A-.> <Esc>.
 """""""""""""""""""""""""""""""""""
 
+vnoremap // y/\V<C-R>"<CR>
+
 " Setting leader key based mappings
 let mapleader=","
 let maplocalleader=";"
 " Easy buffer switching `,b<num>`
 noremap <Leader>b :buffers<CR>:buffer<Space>
+
+
+" Open loclist
+noremap <Leader>l :lopen<CR>
+" Next loclist
+noremap <Leader>n :lnext<CR>
+" Previous loclist
+noremap <Leader>p :lprev<CR>
 
 " Spellcheck shortcuts
 " Quick spelling fix
@@ -313,6 +326,10 @@ endif
 """"""""""""""""""""""""""""""""""""""""
 call plug#begin('~/.config/nvim/plugged')
 
+Plug 'bling/vim-airline'
+
+Plug 'easymotion/vim-easymotion'
+
 "Mustache/Handlebars syntax"
 Plug 'mustache/vim-mustache-handlebars'
 
@@ -327,19 +344,19 @@ let g:taboo_tab_format = ' %N : %P '
 Plug 'msmith491/python-syntax'
 let g:python_highlight_all = 1
 
-if has('nvim')
-    Plug 'Shougo/deoplete.nvim'
-    let g:deoplete#enable_at_startup = 1
-    let g:deoplete#enable_smart_case = 1
-    let g:deoplete#auto_complete_start_length = 3
-    inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+" Plug 'Shougo/deoplete.nvim'
+" let g:deoplete#enable_at_startup = 1
+" let g:deoplete#enable_smart_case = 1
+" let g:deoplete#auto_complete_start_length = 3
+" inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
 
-    Plug 'deoplete-plugins/deoplete-jedi'
-    let deoplete#sources#jedi#show_docstring = 0
+" Plug 'deoplete-plugins/deoplete-jedi'
+" let deoplete#sources#jedi#show_docstring = 0
+"
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
-    " Forces preview window to close after completion
-    autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
-endif
+" Forces preview window to close after completion
+autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
 
 " Theme
 Plug 'freeo/vim-kalisi'
@@ -354,17 +371,24 @@ let g:gitgutter_max_signs = 1000
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 let $FZF_DEFAULT_COMMAND = 'rg --files'
 nnoremap <C-p> :FZF<CR>
+Plug 'junegunn/fzf.vim'
+nnoremap <C-h> :History<CR>
+nnoremap <C-f> :Lines<CR>
+nnoremap <C-b> :Buffers<CR>
+nnoremap <C-s> :Rg<Space>
 
 " Easy alignment of lines
 Plug 'junegunn/vim-easy-align'
 xmap ga <Plug>(EasyAlign)
 nmap ga <Plug>(EasyAlign)
 
-
 " Better file browser
 Plug 'scrooloose/nerdtree'
 map <C-n> :NERDTreeToggle<CR>
 let NERDTreeIgnore = ['\.pyc$']
+
+Plug 'Asheq/close-buffers.vim'
+nnoremap <Leader>cc :Bdelete hidden<CR>
 
 " Tag generation
 Plug 'ludovicchabant/vim-gutentags'
@@ -389,6 +413,12 @@ endif
 let g:tagbar_ctags_bin='/usr/local/bin/ctags'
 let g:tagbar_autofocus=1
 
+" PlantUML
+" This requries java
+Plug 'scrooloose/vim-slumlord'
+Plug 'aklt/plantuml-syntax'
+nnoremap <Leader>cc :CloseHiddenBuffers<CR>
+
 """"""""""""""""""""""""""""""""""""""""
 """""""""" Hail To The Tpope """""""""""
 """"""""""""""""""""""""""""""""""""""""
@@ -402,28 +432,35 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-speeddating'
 """""""""""""""""""""""""""""""""""""""
 
-Plug 'scrooloose/syntastic'
-set laststatus=2
-set statusline+=%f
-set statusline+=%#warningmsg#
-set statusline+=%{SyntasticStatuslineFlag()}
-set statusline+=%*
+" Plug 'scrooloose/syntastic'
+" set laststatus=2
+" set statusline+=%f
+" set statusline+=%#warningmsg#
+" set statusline+=%{SyntasticStatuslineFlag()}
+" set statusline+=%*
 
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-" Python checker settings
-let g:syntastic_python_checkers = ["flake8"]
-let g:syntastic_python_python_exec = '/usr/local/bin/python3'
-let g:syntastic_python_flake8_exe = 'python3 -m flake8'
-let g:syntastic_yaml_checkers = ['yamllint']
-let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
-let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
-let g:syntastic_sh_checkers = ['shellcheck']
+" let g:syntastic_always_populate_loc_list = 1
+" let g:syntastic_auto_loc_list = 1
+" let g:syntastic_check_on_open = 1
+" let g:syntastic_check_on_wq = 0
+" " Python checker settings
+" let g:syntastic_python_checkers = ["pylint", "pyflakes", "flake8"]
+" let g:syntastic_python_python_exec = '/usr/local/bin/python3'
+" let g:syntastic_python_flake8_exe = 'python3 -m flake8'
+" let g:syntastic_python_pylint_exe = 'python3 -m pylint'
+" let g:syntastic_python_pyflakes_exe = 'python3 -m pyflakes'
+" let g:syntastic_python_flake8_post_args = "--ignore=E501"
+" let g:syntastic_yaml_checkers = ['yamllint']
+" let g:syntastic_go_checkers = ['golint', 'govet', 'errcheck']
+" let g:syntastic_mode_map = { 'mode': 'active', 'passive_filetypes': ['go', 'html'] }
+" let g:syntastic_sh_checkers = ['shellcheck']
+"
+" Ale (Async Linting Engine)
+Plug 'w0rp/ale'
 
 
 
+" Rainbow parentheses
 Plug 'luochen1990/rainbow'
 let g:rainbow_active = 1
 
@@ -431,45 +468,41 @@ Plug 'Glench/Vim-Jinja2-Syntax'
 
 Plug 'kshenoy/vim-signature'
 
-""""""""""""""""""""""""""""""""""""""""
-"""""" Plugins Only I Care About """""""
-""""""""""""""""""""""""""""""""""""""""
-if has('nvim')
-    " Lisp plugin
-    " Plug 'kovisoft/slimv'
-    " let g:slimv_leader = ";"
-    " " Dlang Autocomplete/GoTo def
-    " Plug 'Hackerpilot/DCD'
-    " Plug 'idanarye/vim-dutyl'
-    " let g:dutyl_stdImportPaths=['/usr/local/Cellar/dmd/2.069.1/include/d2/']
-    " autocmd FileType d nnoremap <Leader>gd :DUddoc<CR>
-    " autocmd FileType d nnoremap <Leader>jd :DUjump<CR>
-    " Rust
-    Plug 'rust-lang/rust.vim'
-    let g:rustfmt_autosave = 1
-    let g:syntastic_rust_rustc_exe = 'cargo check'
-    let g:syntastic_rust_rustc_fname = ''
-    let g:syntastic_rust_rustc_args = '--'
-    let g:syntastic_rust_checkers = ['rustc']
-    Plug 'zah/nim.vim'
-    set tabstop=4
-    set shiftwidth=4
-    " Go
-    Plug 'fatih/vim-go'
-    let g:go_highlight_functions = 1
-    let g:go_highlight_methods = 1
-    let g:go_highlight_fields = 1
-    let g:go_highlight_types = 1
-    let g:go_highlight_operators = 1
-    let g:go_highlight_build_constraints = 1
-    let g:go_play_open_browser = 0
-    let g:go_bin_path = expand("~/.gotools")
-    let g:go_list_type = "quickfix"
-    " Scala
-    Plug 'derekwyatt/vim-scala'
-    " Perl
-    " Plug 'vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' }
-endif
+Plug 'voldikss/vim-floaterm'
+
+" Enable these when I work with these languages again
+" Lisp plugin
+" Plug 'kovisoft/slimv'
+" let g:slimv_leader = \";"
+" Scala
+" Plug 'derekwyatt/vim-scala'
+" Perl
+" Plug 'vim-perl/vim-perl', { 'for': 'perl', 'do': 'make clean carp dancer highlight-all-pragmas moose test-more try-tiny' }
+
+" Rust
+Plug 'rust-lang/rust.vim'
+let g:rustfmt_autosave = 1
+let g:syntastic_rust_rustc_exe = 'cargo check'
+let g:syntastic_rust_rustc_fname = ''
+let g:syntastic_rust_rustc_args = '--'
+let g:syntastic_rust_checkers = ['rustc']
+Plug 'zah/nim.vim'
+set tabstop=4
+set shiftwidth=4
+
+" Go
+Plug 'fatih/vim-go'
+let g:go_highlight_functions = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_fields = 1
+let g:go_highlight_types = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_build_constraints = 1
+let g:go_play_open_browser = 0
+let g:go_bin_path = expand("~/.gotools")
+let g:go_list_type = "quickfix"
+let g:go_def_mode='gopls'
+let g:go_info_mode='gopls'
 
 call plug#end()
 
@@ -477,31 +510,6 @@ call plug#end()
 """""""""" END PLUGINS  """"""""""""""""
 """"""""""""""""""""""""""""""""""""""""
 colorscheme kalisi
-
-""""""""""""""""""""""""""""""""""""""""
-""""""" Stuff Only I Care About """"""""
-""""""""""""""""""""""""""""""""""""""""
-" Dlang settings and servers
-if has('nvim')
-    " Update Dlang autocomplete client/server locations
-    " call dutyl#register#tool('dcd-client',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-client')
-    " call dutyl#register#tool('dcd-server',$HOME . '/.config/nvim/plugged/DCD/bin/dcd-server')
-
-    " function StartDCD()
-    "     let testvar = system('ps -ef | grep dcd-server | grep -v grep')
-    "     if testvar == ''
-    "         let server = 'tmux new -s dcd-server -d "' . $HOME . '/.config/nvim/plugged/DCD/bin/dcd-server -I /usr/local/Cellar/dmd/2.069.1/include/d2/"'
-    "         exec "!" . server
-    "     endif
-    " endfunction
-
-    " autocmd FileType d call StartDCD()
-
-    " Terminal mode autocommands to turn off stuff I don't want
-    au TermOpen * setlocal norelativenumber
-    au TermOpen * setlocal nonumber
-    au TermOpen * setlocal signcolumn=no
-endif
 
 """"""""""""""""""""""""""""""""""
 """"""  Python AutoCommands """"""
@@ -547,3 +555,14 @@ autocmd BufRead,BufNewFile *Jenkinsfile*          setfiletype groovy
 autocmd BufRead,BufNewFile *jenkinsfile*          setfiletype groovy
 autocmd BufRead,BufNewFile *Jenkinsfile*          nnoremap gc :call JenkinsfileLint()<CR>
 autocmd BufRead,BufNewFile *jenkinsfile*          nnoremap gc :call JenkinsfileLint()<CR>
+
+
+""""""""""""""""""""""""""""""""""""""""
+"""""""" Dockerfile Settings  """"""""""
+""""""""""""""""""""""""""""""""""""""""
+autocmd BufRead,BufNewFile *Dockerfile*          setfiletype dockerfile
+
+"""""""""""""""""""""""""""""""""
+"""""""" UML Settings  """"""""""
+"""""""""""""""""""""""""""""""""
+autocmd! BufWritePost *uml*          :call UmlDisplay()

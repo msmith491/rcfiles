@@ -1,12 +1,5 @@
 # Path to your oh-my-zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
-
-alias vi="NVIM_LISTEN_ADDRESS=/tmp/nvimsocket nvim"
-alias vim=nvim
-alias cleanpy="find . \( -name '*.pyc' -o -name '*.pyo' \) -exec rm -f {} +"
-if which kitty > /dev/null; then
-    alias ssh="kitty +kitten ssh"
-fi
+export ZSH="${HOME}/.oh-my-zsh"
 
 export NVIM_TUI_ENABLE_CURSOR_SHAPE=1
 # Set name of the theme to load.
@@ -70,7 +63,9 @@ DISABLE_AUTO_TITLE="true"
 # stamp shown in the history command output.
 # The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
 HIST_STAMPS="mm/dd/yyyy"
-HISTSIZE=1000000
+HISTSIZE=10000
+HISTFILE=~/.zsh_history
+SAVEHIST=10000
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -90,7 +85,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sb
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
+if [[ -n ${SSH_CONNECTION} ]]; then
   export EDITOR='nvim'
 else
   export EDITOR='vim'
@@ -101,6 +96,10 @@ fi
 
 # ssh
 # export SSH_KEY_PATH="~/.ssh/dsa_id"
+
+setopt appendhistory
+setopt share_history
+setopt inc_append_history
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -113,33 +112,67 @@ fi
 # Bindings for FZF
 export FZF_DEFAULT_OPTS='-m'
 
-fe() {
-    # fe - Open the selected files with the default editor
-    local files=$(ag -g "" | fzf -m)
-    local command="${EDITOR:-vim} -p $files"
-    [ -n "$files" ] && eval $command
-}
-
-
-fd() {
-    # fd - cd to selected directory
-    local dir
-    dir=$(find ${1:-*} -path '*/\.*' -prune -o -type d -print 2> /dev/null | fzf +m) &&
-    cd "$dir"
-}
-
 fh() {
     # fh - repeat history
-    eval $( ([ -n "$ZSH_NAME" ] && fc -l 1 || history) | fzf +s --tac | sed 's/ *[0-9]* *//')
+    LBUFFER="$(fc -l 1 | sed 's/ *[0-9]* *//' | sort | uniq | fzf +s -e --tac)"
 }
 
 fkill() {
     # fkill - kill process
     pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
-    if [ "x$pid" != "x" ]
+    if [ "x${pid}" != "x" ]
     then
-        kill -${1:-9} $pid
+        kill -${1:-9} ${pid}
     fi
+}
+
+fb() {
+    git branch --list --all | fzf --color | xargs git checkout
+}
+
+taskw() {
+    # Poor man's do-while
+    clear
+    out=$(task rc._forcecolor:on rc.defaultwidth:120 next limit:50)
+    echo "$out"
+    while sleep 5; out=$(task rc._forcecolor:on rc.defaultwidth:120 next limit:50); do clear; echo "$out"; done
+}
+
+vpnc() {
+    nmcli con up id DataRobotVPN_hq
+}
+
+vpnd() {
+    nmcli con down id DataRobotVPN_hq
+}
+
+vpns() {
+    nmcli con show --active | grep vpn
+}
+
+vpnw() {
+    while true; do
+        vpns > /dev/null 2>&1
+        if [[ $? != 0 ]]; then
+            vpnc > /dev/null 2>&1
+        fi
+        sleep 10
+    done
+}
+
+vpnwbg() {
+    echo "Starting VPN watcher daemon"
+    vpnw &
+    export VPNWATCHPID=$!
+}
+
+vpnwbgkill() {
+    echo "Killing VPN watcher daemon"
+    kill -9 ${VPNWATCHPID} > /dev/null
+}
+
+title() {
+    echo -e "\033]0;$@\007"
 }
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -148,36 +181,65 @@ fpath=(~/_rg $fpath)
 
 # Binding reverse history search to fzf function
 zle -N fh
-bindkey "^r" fh
+# bindkey -s '^r' 'fh\n'
+bindkey '^r' fh
 
 # SUDO PLUGIN
 sudo-command-line() {
-    [[ -z $BUFFER ]] && zle up-history
-    if [[ $BUFFER == sudo\ * ]]; then
+    [[ -z ${BUFFER} ]] && zle up-history
+    if [[ ${BUFFER} == sudo\ * ]]; then
         LBUFFER="${LBUFFER#sudo }"
-    elif [[ $BUFFER == $EDITOR\ * ]]; then
+    elif [[ ${BUFFER} == ${EDITOR}\ * ]]; then
         LBUFFER="${LBUFFER#$EDITOR }"
-        LBUFFER="sudoedit $LBUFFER"
-    elif [[ $BUFFER == sudoedit\ * ]]; then
+        LBUFFER="sudoedit ${LBUFFER}"
+    elif [[ ${BUFFER} == sudoedit\ * ]]; then
         LBUFFER="${LBUFFER#sudoedit }"
-        LBUFFER="$EDITOR $LBUFFER"
+        LBUFFER="${EDITOR} ${LBUFFER}"
     else
-        LBUFFER="sudo $LBUFFER"
+        LBUFFER="sudo ${LBUFFER}"
     fi
 }
 zle -N sudo-command-line
 # Defined shortcut keys: [Esc] [Esc]
 bindkey "\e\e" sudo-command-line
 
-source $ZSH/oh-my-zsh.sh
-PATH=$PATH:~/.local/bin/
-PATH=$PATH:~/.local/go/bin/
-PATH=$PATH:~/go/bin/
+if which starship >/dev/null; then
+    eval "$(starship init zsh)"
+else
+    source ${ZSH}/oh-my-zsh.sh
+fi
+PATH=${PATH}:~/.local/bin/
+PATH=${PATH}:~/.local/go/bin/
+PATH=${PATH}:~/go/bin/
+PATH=${PATH}:~/.gotools/
+PATH=${PATH}:/snap/bin/
+
+
+# Oh-my-zsh will overwrite some of these aliases if we put them before it, so
+# they need to go here
+alias vi="NVIM_LISTEN_ADDRESS=/tmp/nvimsocket nvim"
+alias vim=nvim
+alias cleanpy="find . \( -name '*.pyc' -o -name '*.pyo' \) -exec rm -f {} +"
+if which kitty > /dev/null; then
+    alias ssh="kitty +kitten ssh"
+fi
+
+if which lsd > /dev/null; then
+    alias ls='lsd'
+    alias l='lsd -l'
+    alias la='lsd -a'
+    alias lla='lsd -la'
+    alias lt='lsd --tree'
+fi
 
 # Hidden creds
+# creds needed for rcfile functionality
+# * JENKINS_URL
+# * JENKINS_USER
+# * JENKINS_TOKEN
 CREDSFILE=~/.config/.creds
-if [ -e $CREDSFILE ]; then
-    source $CREDSFILE
+if [ -e ${CREDSFILE} ]; then
+    source ${CREDSFILE}
 else
-    echo "No creds file found at $CREDSFILE"
+    echo "No creds file found at ${CREDSFILE}"
 fi

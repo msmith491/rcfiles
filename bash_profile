@@ -174,3 +174,6 @@ export PROMPT_COMMAND=_mk_prompt
 export PATH=/usr/local/bin:$PATH
 export PATH=/usr/local/sbin:$PATH
 [[ -s "/Users/masmith/.gvm/scripts/gvm" ]] && source "/Users/masmith/.gvm/scripts/gvm"
+[[ -f ~/.bashrc ]] && . ~/.bashrc
+
+export PATH="$HOME/.cargo/bin:$PATH"

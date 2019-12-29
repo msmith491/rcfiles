@@ -175,3 +175,11 @@ export PATH=/usr/local/sbin:$PATH
 [[ -s "/Users/masmith/.gvm/scripts/gvm" ]] && source "/Users/masmith/.gvm/scripts/gvm"
 
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
+[ -f ~/.quantumrc ] && source ~/.quantumrc
+
+export WORKSPACE="$HOME/workspace"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" --no-use
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
