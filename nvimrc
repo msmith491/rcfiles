@@ -354,6 +354,10 @@ let g:python_highlight_all = 1
 " let deoplete#sources#jedi#show_docstring = 0
 "
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" Enable tab completion for coc.nvim
+inoremap <expr> <Tab> pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 
 " Forces preview window to close after completion
 autocmd InsertLeave,CompleteDone * if pumvisible() == 0 | pclose | endif
