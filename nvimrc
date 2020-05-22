@@ -30,6 +30,10 @@ set wildignore+=*.pyc,*.swp     " Filter these filetypes from the file search fu
 set splitright          " Vertical splits go to the right by default
 set splitbelow          " Horizontal splits go below by default
 
+set virtualedit=block   " Allow visual blocks to extend beyond end of text in lines
+
+set t_Co=256            " Terminal colors
+
 set backspace=indent,eol,start  " make that backspace key work the way it should
 
 syntax on               " turn syntax highlighting on by default
@@ -114,127 +118,6 @@ function! OP(fs)
     endfor
 endfunction
 
-let g:plz_save=$HOME . '/plz_save.session'
-
-function! PlzSave()
-    let l:origbuff=nvim_get_current_buf()
-    let l:origtab=nvim_get_current_tabpage()
-    let l:session=[]
-    " Iterate through open tabs
-    for l:tnum in nvim_list_tabpages()
-        " Switch to the tab
-        call nvim_set_current_tabpage(l:tnum)
-        let l:buffs=[]
-        let l:terms=0
-        " Iterate through the buffers for this tab
-        for l:tb in tabpagebuflist()
-            " Save the buffer filepath
-            let l:bi=getbufinfo(l:tb)[0]
-            let l:f=l:bi['name']
-            let l:n=l:bi['lnum']
-            " Count terminal windows
-            if l:f =~ 'term:'
-                let l:terms += 1
-            " Normalize NERDtree entries to be parent directories
-            elseif l:f =~ 'NERD_tree'
-                let l:f='/' . join(split(l:f, '/')[0:-2], '/')
-                call add(l:buffs, [l:f, l:n])
-            else
-                call add(l:buffs, [l:f, l:n])
-            endif
-        endfor
-        " Key everything by the working directory
-        call add(l:session, [getcwd(), {'buffs': l:buffs, 'terms': l:terms}])
-    endfor
-    call nvim_set_current_tabpage(l:origtab)
-    call nvim_set_current_buf(l:origbuff)
-    echo 'Saving session to ' . g:plz_save
-    " Write session info to file
-    call SaveVar(l:session, g:plz_save)
-endfunction
-
-function! PlzRestore()
-    let l:session=ReadVar(g:plz_save)
-    for l:elem in l:session
-        let [l:cwd, l:d]=l:elem
-        let l:buffs=l:d['buffs']
-        let l:terms=l:d['terms']
-        " There should never be more than six files open
-        " And we want different window configs depending on number
-        exe 'tabe ' . l:buffs[0][0]
-        exe 'tcd ' . l:cwd
-        for l:b in l:buffs[1:2]
-            exe 'sp ' . l:b[0]
-        endfor
-        for l:b in l:buffs[4:4]
-            exe 'vsp ' . l:b[0]
-        endif
-    endfor
-endfunction
-
-function! SaveVar(var, file)
-    " turn the var to a string that vimscript understands
-    let l:serialized = string(a:var)
-    " dump this string to a file
-    call writefile([l:serialized], a:file)
-endfunction
-
-function! ReadVar(file)
-    " retrieve string from the file
-    let l:serialized = readfile(a:file)[0]
-    " turn it back to a vimscript variable
-    exe "let result = " . l:serialized
-    return result
-endfunction
-
-""""""""""""""""""""""""""""""""""""""""
-" Python Jump To Declaration Functions "
-""""""""""""""""""""""""""""""""""""""""
-function! RgFindDefMatch(s, n)
-    let find = "'def " . a:s . "\\('"
-    let findv = "def " . a:s . "\("
-    let output = trim(
-            \ system("rg " . l:find . " -l | head -n " . a:n . " | tail -n 1"))
-    return [l:output, l:findv]
-endfunction
-
-function! RgFindClassMatch(s, n)
-    let find = "'class " . a:s . "[\\(|:]'"
-    let findv = "class " . a:s
-    let output = trim(
-        \ system("rg " . l:find . " -l | head -n " . a:n . " | tail -n 1"))
-    return [l:output, l:findv]
-endfunction
-
-function! OpenSearchFile(file, search)
-    exe "sp " . a:file
-    exe "normal /" . a:search . "\<cr>"
-    let @/ = a:search
-    normal zz
-endfunction
-
-function! PythonJumpToDefinition(n)
-    let word = expand('<cword>')
-    let [output, findv] = RgFindDefMatch(l:word, a:n)
-    if l:output != ""
-        call OpenSearchFile(l:output, l:findv)
-    else
-        let [output, findv] = RgFindClassMatch(l:word, a:n)
-        if l:output != ""
-            call OpenSearchFile(l:output, l:findv)
-        else
-            echo "No defition found for 'def|class " . word . "'"
-        endif
-    endif
-endfunction
-
-function! PythonJumpToAssignment()
-    let word = expand('<cword>')
-    let find = " \\<" . l:word . " = "
-    exe "normal ?" . l:find . "\<cr>"
-    let @/ = l:find
-endfunction
-
 function! JenkinsfileLint()
     exe "!curl --user ". $JENKINS_USER . ":" . $JENKINS_TOKEN . " -X POST -F 'jenkinsfile=<" . expand("%:p") . "' " . $JENKINS_URL . "/pipeline-model-converter/validate"
 endfunction
@@ -301,13 +184,6 @@ noremap <Leader>,pc !pylint %
 " Short UUID Generation in quotes
 nnoremap <Leader>u mm:r!uuidgen\|cut -c 1-8<CR>dW"_dd`mi""<Esc>hp
 """"
-" Rust keymappings
-""""
-noremap <Leader>rp i println!("{:?}"
-
-noremap <Leader>rf i .fold(0, \|acc, item\| acc + item)
-
-""""
 " Slimv keymappings
 """"
 noremap <LocalLeader>wp :emenu Slimv.Edit.Paredit-Wrap
@@ -327,6 +203,7 @@ endif
 call plug#begin('~/.config/nvim/plugged')
 
 Plug 'bling/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 
 Plug 'easymotion/vim-easymotion'
 
@@ -399,7 +276,7 @@ Plug 'ludovicchabant/vim-gutentags'
 let g:gutentags_cache_dir = $HOME . '/.gutencache'
 
 " Function definitions in their own window
-Plug 'majutsushi/tagbar'
+Plug 'majutsushi/tagbar', { 'on': 'TagbarToggle' }
 " Accessible via `tb` shortcut
 :nnoremap tb :TagbarToggle<CR>
 " Autoinstalling exhuberent ctags so tagbar will function
@@ -421,7 +298,7 @@ let g:tagbar_autofocus=1
 " This requries java
 Plug 'scrooloose/vim-slumlord'
 Plug 'aklt/plantuml-syntax'
-nnoremap <Leader>cc :CloseHiddenBuffers<CR>
+nnoremap <Leader>cc :Bdelete hidden<CR>
 
 """"""""""""""""""""""""""""""""""""""""
 """""""""" Hail To The Tpope """""""""""
@@ -486,10 +363,13 @@ Plug 'voldikss/vim-floaterm'
 " Rust
 Plug 'rust-lang/rust.vim'
 let g:rustfmt_autosave = 1
-let g:syntastic_rust_rustc_exe = 'cargo check'
-let g:syntastic_rust_rustc_fname = ''
-let g:syntastic_rust_rustc_args = '--'
-let g:syntastic_rust_checkers = ['rustc']
+autocmd FileType rust nnoremap gd :call CocActionAsync("jumpDefinition")<CR>
+
+noremap <Leader>rp i println!("{:?}"
+
+noremap <Leader>rf i .fold(0, \|acc, item\| acc + item)
+
+
 Plug 'zah/nim.vim'
 set tabstop=4
 set shiftwidth=4
@@ -521,11 +401,7 @@ colorscheme kalisi
 autocmd Filetype python setlocal indentkeys-=<:>
 autocmd FileType python setlocal indentkeys-=:
 " Jump to Python Definiton
-autocmd FileType python nnoremap gd :call PythonJumpToDefinition(1)<CR>
-autocmd FileType python nnoremap g2d :call PythonJumpToDefinition(2)<CR>
-autocmd FileType python nnoremap g3d :call PythonJumpToDefinition(3)<CR>
-" Jump to Python Assignment
-autocmd FileType python nnoremap ga :call PythonJumpToAssignment()<CR>
+autocmd FileType python nnoremap gd :call CocActionAsync("jumpDefinition")<CR>
 
 
 """"""""""""""""""""""""""""""""""

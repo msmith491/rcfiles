@@ -26,6 +26,8 @@ if which pyenv-virtualenv-init > /dev/null; then
     eval "$(pyenv init -)";
 fi
 
+unsetopt BEEP
+
 # BULLETTRAIN_VIRTUALENV_FG="black"
 # BULLETTRAIN_GO_SHOW="true"
 # BULLETTRAIN_GO_FG="black"
@@ -84,13 +86,6 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sb
 # You may need to manually set your language environment
 # export LANG=en_US.UTF-8
 
-# Preferred editor for local and remote sessions
-if [[ -n ${SSH_CONNECTION} ]]; then
-  export EDITOR='nvim'
-else
-  export EDITOR='vim'
-fi
-
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
@@ -112,12 +107,12 @@ setopt inc_append_history
 # Bindings for FZF
 export FZF_DEFAULT_OPTS='-m'
 
-fh() {
+function fh() {
     # fh - repeat history
     LBUFFER="$(fc -l 1 | sed 's/ *[0-9]* *//' | sort | uniq | fzf +s -e --tac)"
 }
 
-fkill() {
+function fkill() {
     # fkill - kill process
     pid=$(ps -ef | sed 1d | fzf -m | awk '{print $2}')
     if [ "x${pid}" != "x" ]
@@ -126,11 +121,11 @@ fkill() {
     fi
 }
 
-fb() {
+function fb() {
     git branch --list --all | fzf --color | xargs git checkout
 }
 
-taskw() {
+function taskw() {
     # Poor man's do-while
     clear
     out=$(task rc._forcecolor:on rc.defaultwidth:120 next limit:50)
@@ -138,19 +133,19 @@ taskw() {
     while sleep 5; out=$(task rc._forcecolor:on rc.defaultwidth:120 next limit:50); do clear; echo "$out"; done
 }
 
-vpnc() {
+function vpnc() {
     nmcli con up id DataRobotVPN_hq
 }
 
-vpnd() {
+function vpnd() {
     nmcli con down id DataRobotVPN_hq
 }
 
-vpns() {
+function vpns() {
     nmcli con show --active | grep vpn
 }
 
-vpnw() {
+function vpnw() {
     while true; do
         vpns > /dev/null 2>&1
         if [[ $? != 0 ]]; then
@@ -160,18 +155,18 @@ vpnw() {
     done
 }
 
-vpnwbg() {
+function vpnwbg() {
     echo "Starting VPN watcher daemon"
     vpnw &
     export VPNWATCHPID=$!
 }
 
-vpnwbgkill() {
+function vpnwbgkill() {
     echo "Killing VPN watcher daemon"
     kill -9 ${VPNWATCHPID} > /dev/null
 }
 
-title() {
+function title() {
     echo -e "\033]0;$@\007"
 }
 
@@ -184,8 +179,10 @@ zle -N fh
 # bindkey -s '^r' 'fh\n'
 bindkey '^r' fh
 
+export EDITOR='nvim'
+
 # SUDO PLUGIN
-sudo-command-line() {
+function sudo-command-line() {
     [[ -z ${BUFFER} ]] && zle up-history
     if [[ ${BUFFER} == sudo\ * ]]; then
         LBUFFER="${LBUFFER#sudo }"
@@ -208,6 +205,8 @@ if which starship >/dev/null; then
 else
     source ${ZSH}/oh-my-zsh.sh
 fi
+# The many locations I might put go
+PATH=${PATH}:/usr/local/go/bin/
 PATH=${PATH}:~/.local/bin/
 PATH=${PATH}:~/.local/go/bin/
 PATH=${PATH}:~/go/bin/
@@ -226,11 +225,21 @@ fi
 
 if which lsd > /dev/null; then
     alias ls='lsd'
-    alias l='lsd -l'
-    alias la='lsd -a'
-    alias lla='lsd -la'
-    alias lt='lsd --tree'
+    alias tree='lsd --tree'
 fi
+
+
+function kwkon() {
+    source ~/.quantumrc
+    workon $1
+    export KUBECONFIG=~/.datarobot/etc/kubernetes/kubeconfig.admin
+    # Kubernetes Aliases
+    alias kgp='kubectl get pods --all-namespaces'
+    alias drgm='drg -o lrs-controller-manager-moe -n datarobot-lrs logs --pretty'
+    alias drgl='drg -o lrs-controller-manager-larry -n datarobot-lrs logs --pretty'
+    alias drgw='drg -o lrs-webhook -n kube-system logs --pretty'
+}
+
 
 # Hidden creds
 # creds needed for rcfile functionality
@@ -243,3 +252,5 @@ if [ -e ${CREDSFILE} ]; then
 else
     echo "No creds file found at ${CREDSFILE}"
 fi
+
+export WORKSPACE="$HOME/workspace"
